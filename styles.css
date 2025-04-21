@@ -21,9 +21,13 @@ main {
     margin-top: 20px;
 }
 
-button {
+input, button {
+    margin: 10px;
     padding: 10px 20px;
     font-size: 16px;
+}
+
+button {
     background-color: #28a745;
     color: white;
     border: none;
@@ -33,4 +37,9 @@ button {
 
 button:hover {
     background-color: #218838;
+}
+
+p {
+    margin-top: 10px;
+    font-size: 16px;
 }

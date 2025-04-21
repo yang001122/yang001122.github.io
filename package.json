@@ -1,0 +1,27 @@
+{
+  "name": "my-ai-website",
+  "version": "1.0.0",
+  "main": "script.js",
+  "scripts": {
+    "start": "node server.js",  // 添加了这一行，注意后面有逗号
+    "test": "echo \"Error: no test specified\" && exit 1" // 保持原有的测试脚本
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yang001122/yang001122.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yang001122/yang001122.github.io/issues"
+  },
+  "homepage": "https://github.com/yang001122/yang001122.github.io#readme",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0"
+  }
+}
