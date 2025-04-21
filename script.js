@@ -1,4 +1,4 @@
-const BACKEND_URL = 'http://127.0.0.1:5500/index.html';
+const BACKEND_URL = 'https://yunli2201.onrender.com';
 async function callGemini(prompt) {
     try {
         // 调用后端API，而不是直接调用Gemini API
