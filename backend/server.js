@@ -36,10 +36,6 @@ app.post('/api/gemini', async (req, res) => {
         });
     }
 });
-
-// 提供静态文件
-app.use(express.static('.'));
-
 // 启动服务器
 // 修改 PORT，优先使用 Render 提供的环境变量，如果没有，则使用 3000 作为备选
 const PORT = process.env.PORT || 3000;
