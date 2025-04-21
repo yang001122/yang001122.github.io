@@ -409,3 +409,11 @@ input:focus, select:focus {
          /* margin-left: 0; */
      }
 }
+/* 模型标签样式 */
+.model-label {
+    font-size: 0.8em;
+    color: #777;
+    align-self: center;
+    margin-bottom: 8px;
+    font-style: italic;
+}

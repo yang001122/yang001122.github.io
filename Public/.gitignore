@@ -1,0 +1,27 @@
+# 环境变量文件
+.env
+.env.local
+.env.development
+.env.production
+
+# 日志
+logs
+*.log
+npm-debug.log*
+
+# 运行时数据
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 依赖目录
+node_modules/
+
+# 缓存目录
+.npm
+.eslintcache
+
+# 系统文件
+.DS_Store
+Thumbs.db
