@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "script.js",
   "scripts": {
-    "start": "node server.js",  // 添加了这一行，注意后面有逗号
+    "start": "node backend/server.js",  // 添加了这一行，注意后面有逗号
     "test": "echo \"Error: no test specified\" && exit 1" // 保持原有的测试脚本
   },
   "repository": {
