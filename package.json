@@ -1,9 +1,10 @@
 {
   "name": "my-ai-website",
   "version": "1.0.0",
-  "main": "index.html",
+  "main": "backend/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
   },
   "repository": {
     "type": "git",
@@ -16,5 +17,15 @@
     "url": "https://github.com/yang001122/yang001122.github.io/issues"
   },
   "homepage": "https://github.com/yang001122/yang001122.github.io#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "openai": "^4.20.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
 }
