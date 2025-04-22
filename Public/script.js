@@ -1,4 +1,4 @@
-const BACKEND_URL = 'https://yunli2201.onrender.com'; // 后端URL
+const BACKEND_URL = 'https://165.232.161.255:3000'; // 后端URL
 
 // 全局变量来存储当前的DeepSeek模型，更新为正确的模型名称
 let currentDeepSeekModel = 'deepseek-chat';
