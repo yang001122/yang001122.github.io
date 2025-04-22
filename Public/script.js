@@ -1,5 +1,8 @@
 const BACKEND_URL = 'https://yunli2201.onrender.com'; // 后端URL
 
+// 全局变量来存储当前的DeepSeek模型
+let currentDeepSeekModel = 'deepseek-chat';
+
 // 动态获取选择的模型
 function getSelectedModel() {
   return document.getElementById('modelSelect').value;
@@ -11,11 +14,17 @@ async function callModelAPI(prompt) {
   try {
     // 根据选择的模型确定API端点
     let url = `${BACKEND_URL}/api/${selectedModel}`;
+    let requestBody = { prompt: prompt };
+    
+    // 如果是DeepSeek模型，则添加模型类型
+    if (selectedModel === 'deepseek') {
+      requestBody.model = currentDeepSeekModel;
+    }
     
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prompt })
+      body: JSON.stringify(requestBody)
     });
     
     if (!response.ok) {
@@ -24,7 +33,6 @@ async function callModelAPI(prompt) {
     }
     
     const data = await response.json();
-    
     // 适配不同后端返回的格式
     if (data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
       return data.choices[0].message.content;
@@ -65,11 +73,22 @@ function updateHistory(userPrompt, aiResponse) {
   historyItem.dataset.aiResponse = aiResponse;
   historyItem.dataset.model = getSelectedModel(); // 记录使用的模型
   
+  // 如果是DeepSeek模型，则记录具体的子模型
+  if (getSelectedModel() === 'deepseek') {
+    historyItem.dataset.deepseekModel = currentDeepSeekModel;
+  }
+  
   // 添加点击监听器到文本部分以加载对话
   historyTextSpan.addEventListener('click', () => {
     loadHistoryToChat(historyItem.dataset.userPrompt, historyItem.dataset.aiResponse);
     // 自动选择之前使用的模型
     document.getElementById('modelSelect').value = historyItem.dataset.model;
+    
+    // 如果是DeepSeek模型，则设置之前使用的子模型
+    if (historyItem.dataset.model === 'deepseek' && historyItem.dataset.deepseekModel) {
+      currentDeepSeekModel = historyItem.dataset.deepseekModel;
+      updateModelLabel();
+    }
   });
   
   // 创建删除图标容器
@@ -99,11 +118,6 @@ function loadHistoryToChat(userPrompt, aiResponse) {
   const chatDisplay = document.getElementById('chat-display');
   chatDisplay.innerHTML = '';
   
-  const initialWelcome = chatDisplay.querySelector('.initial-welcome');
-  if (initialWelcome) {
-    chatDisplay.removeChild(initialWelcome);
-  }
-  
   const userMessageDiv = document.createElement('div');
   userMessageDiv.classList.add('user-message');
   userMessageDiv.textContent = `${userPrompt}`;
@@ -117,9 +131,107 @@ function loadHistoryToChat(userPrompt, aiResponse) {
   chatDisplay.scrollTop = chatDisplay.scrollHeight;
 }
 
+// 更新显示当前使用的模型标签
+function updateModelLabel() {
+  const modelSelect = document.getElementById('modelSelect');
+  let modelLabel = modelSelect.options[modelSelect.selectedIndex].text;
+  
+  // 如果是DeepSeek模型，添加子模型信息
+  if (modelSelect.value === 'deepseek') {
+    modelLabel += ` (${currentDeepSeekModel})`;
+  }
+  
+  // 更新界面上已有的模型标签，如果没有则创建
+  const existingLabel = document.querySelector('.model-type-indicator');
+  if (existingLabel) {
+    existingLabel.textContent = `当前模型: ${modelLabel}`;
+  } else {
+    const label = document.createElement('div');
+    label.classList.add('model-type-indicator');
+    label.textContent = `当前模型: ${modelLabel}`;
+    label.style.position = 'fixed';
+    label.style.top = '10px';
+    label.style.right = '10px';
+    label.style.background = '#444654';
+    label.style.padding = '5px 10px';
+    label.style.borderRadius = '4px';
+    label.style.fontSize = '12px';
+    label.style.color = '#e0e0e0';
+    document.body.appendChild(label);
+  }
+}
+
+// 创建DeepSeek模型切换器
+function createDeepSeekModelSwitcher() {
+  // 创建切换按钮
+  const switcherContainer = document.createElement('div');
+  switcherContainer.classList.add('deepseek-model-switcher');
+  switcherContainer.style.marginTop = '10px';
+  switcherContainer.style.display = getSelectedModel() === 'deepseek' ? 'block' : 'none';
+  
+  const v3Button = document.createElement('button');
+  v3Button.textContent = 'DeepSeek Chat';
+  v3Button.classList.add(currentDeepSeekModel === 'deepseek-chat' ? 'active' : '');
+  v3Button.style.padding = '5px 10px';
+  v3Button.style.marginRight = '5px';
+  v3Button.style.background = currentDeepSeekModel === 'deepseek-chat' ? '#565869' : '#343541';
+  v3Button.style.border = '1px solid #565869';
+  v3Button.style.borderRadius = '4px';
+  v3Button.style.color = '#fff';
+  v3Button.style.cursor = 'pointer';
+  
+  const r1Button = document.createElement('button');
+  r1Button.textContent = 'DeepSeek R1';
+  r1Button.classList.add(currentDeepSeekModel === 'deepseek-r1' ? 'active' : '');
+  r1Button.style.padding = '5px 10px';
+  r1Button.style.background = currentDeepSeekModel === 'deepseek-r1' ? '#565869' : '#343541';
+  r1Button.style.border = '1px solid #565869';
+  r1Button.style.borderRadius = '4px';
+  r1Button.style.color = '#fff';
+  r1Button.style.cursor = 'pointer';
+  
+  v3Button.addEventListener('click', () => {
+    currentDeepSeekModel = 'deepseek-chat';
+    v3Button.style.background = '#565869';
+    r1Button.style.background = '#343541';
+    updateModelLabel();
+  });
+  
+  r1Button.addEventListener('click', () => {
+    currentDeepSeekModel = 'deepseek-r1';
+    r1Button.style.background = '#565869';
+    v3Button.style.background = '#343541';
+    updateModelLabel();
+  });
+  
+  switcherContainer.appendChild(v3Button);
+  switcherContainer.appendChild(r1Button);
+  
+  // 将切换器添加到模型选择器下方
+  const modelSelector = document.querySelector('.model-selector');
+  const existingSwitcher = document.querySelector('.deepseek-model-switcher');
+  if (existingSwitcher) {
+    modelSelector.replaceChild(switcherContainer, existingSwitcher);
+  } else {
+    modelSelector.appendChild(switcherContainer);
+  }
+}
+
 // 页面加载时
 document.addEventListener('DOMContentLoaded', () => {
   displayInitialWelcome();
+  
+  // 创建DeepSeek模型切换器
+  createDeepSeekModelSwitcher();
+  
+  // 监听模型选择变化
+  document.getElementById('modelSelect').addEventListener('change', (event) => {
+    const switcherContainer = document.querySelector('.deepseek-model-switcher');
+    if (switcherContainer) {
+      switcherContainer.style.display = event.target.value === 'deepseek' ? 'block' : 'none';
+    }
+    updateModelLabel();
+  });
   
   // 检查可用模型并更新选择器
   fetch(`${BACKEND_URL}/`)
@@ -129,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const modelSelect = document.getElementById('modelSelect');
         // 清除现有选项
         modelSelect.innerHTML = '';
-        
         // 添加可用模型
         data.availableModels.forEach(model => {
           const option = document.createElement('option');
@@ -138,6 +249,11 @@ document.addEventListener('DOMContentLoaded', () => {
           modelSelect.appendChild(option);
         });
       }
+      
+      // 更新模型标签
+      updateModelLabel();
+      // 重新创建DeepSeek模型切换器
+      createDeepSeekModelSwitcher();
     })
     .catch(error => console.error('获取可用模型失败:', error));
 });
@@ -168,13 +284,19 @@ document.getElementById('submitButton').addEventListener('click', async () => {
   document.getElementById('userInput').value = '';
   
   const selectedModel = getSelectedModel();
-  const modelLabel = document.createElement('div');
-  modelLabel.classList.add('model-label');
-  modelLabel.textContent = `使用模型: ${selectedModel.toUpperCase()}`;
-  chatDisplay.appendChild(modelLabel);
+  let modelLabel = selectedModel.toUpperCase();
+  
+  // 如果是DeepSeek，添加子模型信息
+  if (selectedModel === 'deepseek') {
+    modelLabel += ` (${currentDeepSeekModel})`;
+  }
+  
+  const modelLabelDiv = document.createElement('div');
+  modelLabelDiv.classList.add('model-label');
+  modelLabelDiv.textContent = `使用模型: ${modelLabel}`;
+  chatDisplay.appendChild(modelLabelDiv);
   
   const result = await callModelAPI(prompt);
-  
   chatDisplay.removeChild(loadingMessage);
   
   const aiMessageDiv = document.createElement('div');
@@ -195,7 +317,6 @@ document.getElementById('searchInput').addEventListener('input', function () {
   
   historyItems.forEach(item => {
     const itemText = item.querySelector('.history-text').textContent.toLowerCase();
-    
     if (itemText.includes(searchTerm)) {
       item.style.display = 'flex';
     } else {

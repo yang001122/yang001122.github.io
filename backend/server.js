@@ -8,12 +8,12 @@ const app = express();
 
 // 中间件
 app.use(cors({
-  origin: ['https://yang001122.github.io', 'http://localhost:3000'], 
+  origin: ['https://yang001122.github.io', 'http://localhost:3000'],
   methods: ['GET', 'POST'],
   credentials: true
 }));
-app.use(express.json()); 
-app.use(express.static(path.join(__dirname, '../Public'))); 
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '../Public')));
 
 // 初始化各种API客户端
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -56,10 +56,11 @@ app.get('/', (req, res) => {
     deepseek ? "DeepSeek" : null
   ].filter(Boolean);
   
-  res.json({ 
+  res.json({
     message: '后端服务正常运行！',
     availableModels: availableModels,
-    endpoints: ['/api/gpt', '/api/gemini', '/api/deepseek']
+    endpoints: ['/api/gpt', '/api/gemini', '/api/deepseek'],
+    deepseekModels: ['deepseek-chat', 'deepseek-r1']
   });
 });
 
@@ -114,7 +115,6 @@ app.post('/api/gemini', async (req, res) => {
     const result = await model.generateContent(prompt);
     const response = result.response;
     const text = response.text();
-    
     res.json({ choices: [{ message: { content: text } }] });
   } catch (error) {
     console.error('调用 Gemini API 时出错:', error);
@@ -132,13 +132,16 @@ app.post('/api/deepseek', async (req, res) => {
   }
   
   try {
-    const { prompt } = req.body;
+    const { prompt, model } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
     }
     
+    // 默认使用 deepseek-chat，如果指定了r1模型则使用r1
+    const modelName = model === 'deepseek-r1' ? 'deepseek-chat-r1' : 'deepseek-chat';
+    
     const completion = await deepseek.chat.completions.create({
-      model: "deepseek-chat", // 请根据DeepSeek提供的实际可用模型名称调整
+      model: modelName,
       messages: [{ role: "user", content: prompt }],
     });
     
