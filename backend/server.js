@@ -130,15 +130,16 @@ app.post('/api/deepseek', async (req, res) => {
   if (!deepseek) {
     return res.status(503).json({ error: "DeepSeek API未配置，此功能不可用" });
   }
-  
   try {
     const { prompt, model } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
     }
     
-    // 默认使用 deepseek-chat，如果指定了r1模型则使用r1
-    const modelName = model === 'deepseek-r1' ? 'deepseek-chat-r1' : 'deepseek-chat';
+    // 使用官方文档指定的模型名称
+    const modelName = model === 'deepseek-reasoner' ? 'deepseek-reasoner' : 'deepseek-chat';
+    
+    console.log(`使用DeepSeek模型: ${modelName}`); // 添加日志以便调试
     
     const completion = await deepseek.chat.completions.create({
       model: modelName,
