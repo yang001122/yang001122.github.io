@@ -13,7 +13,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../')));
+app.use(express.static(path.join(__dirname, '../Public')));
 
 // 初始化各种API客户端
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
