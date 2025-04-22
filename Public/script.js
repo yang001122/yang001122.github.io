@@ -1,6 +1,6 @@
 const BACKEND_URL = 'https://yunli2201.onrender.com'; // 后端URL
 
-// 全局变量来存储当前的DeepSeek模型
+// 全局变量来存储当前的DeepSeek模型，更新为正确的模型名称
 let currentDeepSeekModel = 'deepseek-chat';
 
 // 动态获取选择的模型
@@ -11,7 +11,16 @@ function getSelectedModel() {
 // 调用后端API与不同模型交互
 async function callModelAPI(prompt) {
   const selectedModel = getSelectedModel();
+  const loadingIcon = document.getElementById('loadingIcon');
+  
   try {
+    // 显示全局加载图标
+    loadingIcon.style.display = 'flex';
+    
+    // 设置请求超时
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+    
     // 根据选择的模型确定API端点
     let url = `${BACKEND_URL}/api/${selectedModel}`;
     let requestBody = { prompt: prompt };
@@ -19,13 +28,18 @@ async function callModelAPI(prompt) {
     // 如果是DeepSeek模型，则添加模型类型
     if (selectedModel === 'deepseek') {
       requestBody.model = currentDeepSeekModel;
+      console.log(`使用DeepSeek模型: ${currentDeepSeekModel}`);
     }
     
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
     });
+    
+    // 清除超时
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: response.statusText }));
@@ -33,6 +47,7 @@ async function callModelAPI(prompt) {
     }
     
     const data = await response.json();
+    
     // 适配不同后端返回的格式
     if (data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
       return data.choices[0].message.content;
@@ -42,6 +57,9 @@ async function callModelAPI(prompt) {
   } catch (error) {
     console.error('错误:', error);
     return `错误：无法获取模型响应 - ${error.message}`;
+  } finally {
+    // 隐藏加载图标
+    loadingIcon.style.display = 'none';
   }
 }
 
@@ -169,43 +187,45 @@ function createDeepSeekModelSwitcher() {
   switcherContainer.style.marginTop = '10px';
   switcherContainer.style.display = getSelectedModel() === 'deepseek' ? 'block' : 'none';
   
-  const v3Button = document.createElement('button');
-  v3Button.textContent = 'DeepSeek Chat';
-  v3Button.classList.add(currentDeepSeekModel === 'deepseek-chat' ? 'active' : '');
-  v3Button.style.padding = '5px 10px';
-  v3Button.style.marginRight = '5px';
-  v3Button.style.background = currentDeepSeekModel === 'deepseek-chat' ? '#565869' : '#343541';
-  v3Button.style.border = '1px solid #565869';
-  v3Button.style.borderRadius = '4px';
-  v3Button.style.color = '#fff';
-  v3Button.style.cursor = 'pointer';
+  const chatButton = document.createElement('button');
+  chatButton.textContent = 'DeepSeek Chat';
+  chatButton.classList.add(currentDeepSeekModel === 'deepseek-chat' ? 'active' : '');
+  chatButton.style.padding = '5px 10px';
+  chatButton.style.marginRight = '5px';
+  chatButton.style.background = currentDeepSeekModel === 'deepseek-chat' ? '#565869' : '#343541';
+  chatButton.style.border = '1px solid #565869';
+  chatButton.style.borderRadius = '4px';
+  chatButton.style.color = '#fff';
+  chatButton.style.cursor = 'pointer';
   
-  const r1Button = document.createElement('button');
-  r1Button.textContent = 'DeepSeek R1';
-  r1Button.classList.add(currentDeepSeekModel === 'deepseek-r1' ? 'active' : '');
-  r1Button.style.padding = '5px 10px';
-  r1Button.style.background = currentDeepSeekModel === 'deepseek-r1' ? '#565869' : '#343541';
-  r1Button.style.border = '1px solid #565869';
-  r1Button.style.borderRadius = '4px';
-  r1Button.style.color = '#fff';
-  r1Button.style.cursor = 'pointer';
+  const reasonerButton = document.createElement('button');
+  reasonerButton.textContent = 'DeepSeek R1';
+  reasonerButton.classList.add(currentDeepSeekModel === 'deepseek-reasoner' ? 'active' : '');
+  reasonerButton.style.padding = '5px 10px';
+  reasonerButton.style.background = currentDeepSeekModel === 'deepseek-reasoner' ? '#565869' : '#343541';
+  reasonerButton.style.border = '1px solid #565869';
+  reasonerButton.style.borderRadius = '4px';
+  reasonerButton.style.color = '#fff';
+  reasonerButton.style.cursor = 'pointer';
   
-  v3Button.addEventListener('click', () => {
+  chatButton.addEventListener('click', () => {
     currentDeepSeekModel = 'deepseek-chat';
-    v3Button.style.background = '#565869';
-    r1Button.style.background = '#343541';
+    chatButton.style.background = '#565869';
+    reasonerButton.style.background = '#343541';
     updateModelLabel();
+    console.log("已选择 DeepSeek Chat 模型");
   });
   
-  r1Button.addEventListener('click', () => {
-    currentDeepSeekModel = 'deepseek-r1';
-    r1Button.style.background = '#565869';
-    v3Button.style.background = '#343541';
+  reasonerButton.addEventListener('click', () => {
+    currentDeepSeekModel = 'deepseek-reasoner';
+    reasonerButton.style.background = '#565869';
+    chatButton.style.background = '#343541';
     updateModelLabel();
+    console.log("已选择 DeepSeek Reasoner (R1) 模型");
   });
   
-  switcherContainer.appendChild(v3Button);
-  switcherContainer.appendChild(r1Button);
+  switcherContainer.appendChild(chatButton);
+  switcherContainer.appendChild(reasonerButton);
   
   // 将切换器添加到模型选择器下方
   const modelSelector = document.querySelector('.model-selector');
@@ -232,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateModelLabel();
   });
-  
+
   // 检查可用模型并更新选择器
   fetch(`${BACKEND_URL}/`)
     .then(response => response.json())
@@ -249,7 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
           modelSelect.appendChild(option);
         });
       }
-      
       // 更新模型标签
       updateModelLabel();
       // 重新创建DeepSeek模型切换器
