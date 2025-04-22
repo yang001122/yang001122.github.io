@@ -8,12 +8,12 @@ const app = express();
 
 // 中间件
 app.use(cors({
-  origin: ['https://yang001122.github.io', 'http://localhost:3000'],
+  origin: ['https://yang001122.github.io', 'http://localhost:3000', 'http://165.232.161.255:3000'],
   methods: ['GET', 'POST'],
   credentials: true
 }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../Public')));
+app.use(express.static(path.join(__dirname, '../')));
 
 // 初始化各种API客户端
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
