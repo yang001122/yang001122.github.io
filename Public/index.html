@@ -1,24 +1,19 @@
-index.html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>AI 聊天</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div id="loadingIcon" class="loading-icon">
-        <i class="fas fa-spinner fa-spin"></i> 正在加载...
-    </div>
     <div class="container">
-        <!-- 左侧边栏 -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <div class="new-chat-button" id="newChatButton">
-                    <i class="fas fa-plus"></i> <span>新建对话</span>
-                </div>
+                <button id="newChatButton" class="new-chat-button">
+                    <i class="fas fa-plus"></i> 新建聊天
+                </button>
             </div>
             <div class="sidebar-content">
                 <div class="model-selector">
@@ -29,26 +24,20 @@ index.html
                     </select>
                 </div>
                 <div class="history-search-bar">
-                    <input type="text" id="searchInput" placeholder="搜索历史..." class="search-input">
+                    <input type="text" class="search-input" placeholder="搜索历史记录...">
                 </div>
-                <div id="history-display" class="history-display">
-                    <!-- 历史记录项会在这里动态添加 -->
-                </div>
+                <div class="history-display" id="history-display"></div>
             </div>
         </div>
-        
-        <!-- 右侧聊天区域 -->
         <div class="chat-area">
-            <div id="chat-display" class="chat-display">
-                <!-- 聊天消息会在这里动态添加 -->
-            </div>
+            <div class="chat-display" id="chat-display"></div>
             <div class="input-area-container">
                 <div class="input-area">
                     <div class="attachment-button">
                         <label for="fileInput"><i class="fas fa-paperclip"></i></label>
                         <input type="file" id="fileInput" style="display: none;">
                     </div>
-                    <input type="text" id="userInput" placeholder="问我任何问题...">
+                    <input type="text" id="userInput" placeholder="输入任何内容...">
                     <button id="submitButton" class="send-button">
                         <i class="fas fa-paper-plane"></i>
                     </button>
