@@ -1,49 +1,25 @@
-/* 页面全局样式 */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #000;
+    background-color: #000000;
     color: #e0e0e0;
     display: flex;
     height: 100vh;
     overflow: hidden;
 }
 
-/* Font Awesome 图标 */
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
 
-/* 加载图标 */
-.loading-icon {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    color: #fff;
-    z-index: 9999;
-}
-
-.loading-icon i {
-    margin-right: 10px;
-}
-
-/* 主容器 */
 .container {
     display: flex;
     width: 100%;
     height: 100%;
 }
 
-/* 左侧边栏 */
 .sidebar {
     width: 260px;
-    background-color: #202123;
+    background-color: #000000;
     display: flex;
     flex-direction: column;
     border-right: 1px solid #4d4d4f;
@@ -57,7 +33,7 @@ body {
 .new-chat-button {
     display: flex;
     align-items: center;
-    background-color: #343541;
+    background-color: #000000;
     border: 1px solid #565869;
     color: #fff;
     padding: 12px;
@@ -68,7 +44,7 @@ body {
 }
 
 .new-chat-button:hover {
-    background-color: #444654;
+    background-color: #222222;
 }
 
 .new-chat-button i {
@@ -88,7 +64,7 @@ body {
 .model-selector select {
     width: 100%;
     padding: 8px;
-    background-color: #343541;
+    background-color: #000000;
     color: #fff;
     border: 1px solid #565869;
     border-radius: 4px;
@@ -101,7 +77,7 @@ body {
 .search-input {
     width: 100%;
     padding: 8px;
-    background-color: #343541;
+    background-color: #000000;
     color: #fff;
     border: 1px solid #565869;
     border-radius: 4px;
@@ -120,12 +96,12 @@ body {
     border-radius: 4px;
     margin-bottom: 8px;
     cursor: pointer;
-    background-color: #343541;
+    background-color: #000000;
     transition: background-color 0.2s;
 }
 
 .history-item:hover {
-    background-color: #444654;
+    background-color: #222222;
 }
 
 .history-text {
@@ -149,13 +125,12 @@ body {
     color: #fff;
 }
 
-/* 右侧聊天区域 */
 .chat-area {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background-color: #343541;
+    background-color: #000000;
 }
 
 .chat-display {
@@ -166,14 +141,14 @@ body {
 
 .input-area-container {
     padding: 12px 20px;
-    background-color: #343541;
+    background-color: #000000;
     border-top: 1px solid #4d4d4f;
 }
 
 .input-area {
     display: flex;
     align-items: center;
-    background-color: #40414f;
+    background-color: #000000;
     border-radius: 6px;
     padding: 8px 12px;
 }
@@ -202,7 +177,6 @@ body {
     color: #fff;
 }
 
-/* 聊天消息样式 */
 .user-message, .ai-message {
     padding: 16px;
     margin-bottom: 20px;
@@ -211,11 +185,11 @@ body {
 }
 
 .user-message {
-    background-color: #444654;
+    background-color: #000000;
 }
 
 .ai-message {
-    background-color: #343541;
+    background-color: #000000;
 }
 
 .initial-welcome {
@@ -233,19 +207,16 @@ body {
     font-style: italic;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
     .container {
         flex-direction: column;
     }
-    
     .sidebar {
         width: 100%;
         height: 200px;
         border-right: none;
         border-bottom: 1px solid #4d4d4f;
     }
-    
     .chat-area {
         height: calc(100% - 200px);
     }
