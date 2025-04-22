@@ -136,9 +136,10 @@ app.post('/api/deepseek', async (req, res) => {
       return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
     }
     
-    // 使用官方文档指定的模型名称，确保与API要求匹配
+    // 使用官方文档指定的模型名称
     const modelName = model === 'deepseek-reasoner' ? 'deepseek-reasoner' : 'deepseek-chat';
-    console.log(`使用DeepSeek模型: ${modelName}`);
+    
+    console.log(`使用DeepSeek模型: ${modelName}`); // 添加日志以便调试
     
     const completion = await deepseek.chat.completions.create({
       model: modelName,

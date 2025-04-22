@@ -149,13 +149,9 @@ function updateModelLabel() {
   const modelSelect = document.getElementById('modelSelect');
   let modelLabel = modelSelect.options[modelSelect.selectedIndex].text;
   
-  // 如果是DeepSeek模型，添加具体版本信息
+  // 如果是DeepSeek模型，添加子模型信息
   if (modelSelect.value === 'deepseek') {
-      if (currentDeepSeekModel === 'deepseek-chat') {
-          modelLabel += ' (V3)';
-      } else if (currentDeepSeekModel === 'deepseek-reasoner') {
-          modelLabel += ' (R1)';
-      }
+    modelLabel += ` (${currentDeepSeekModel})`;
   }
   
   // 更新界面上已有的模型标签，如果没有则创建
@@ -180,16 +176,14 @@ function updateModelLabel() {
 
 // 创建DeepSeek模型切换器
 function createDeepSeekModelSwitcher() {
-  // 确保切换器清晰可见
+  // 创建切换按钮
   const switcherContainer = document.createElement('div');
   switcherContainer.classList.add('deepseek-model-switcher');
   switcherContainer.style.marginTop = '10px';
-  switcherContainer.style.marginBottom = '10px';
   switcherContainer.style.display = getSelectedModel() === 'deepseek' ? 'block' : 'none';
-  switcherContainer.style.textAlign = 'center'; // 居中显示
   
   const chatButton = document.createElement('button');
-  chatButton.textContent = 'DeepSeek V3';  // 更新按钮文本
+  chatButton.textContent = 'DeepSeek Chat';
   chatButton.classList.add(currentDeepSeekModel === 'deepseek-chat' ? 'active' : '');
   chatButton.style.padding = '5px 10px';
   chatButton.style.marginRight = '5px';
@@ -214,7 +208,7 @@ function createDeepSeekModelSwitcher() {
     chatButton.style.background = '#565869';
     reasonerButton.style.background = '#343541';
     updateModelLabel();
-    console.log("已选择 DeepSeek V3 模型");
+    console.log("已选择 DeepSeek Chat 模型");
   });
   
   reasonerButton.addEventListener('click', () => {
@@ -222,13 +216,13 @@ function createDeepSeekModelSwitcher() {
     reasonerButton.style.background = '#565869';
     chatButton.style.background = '#343541';
     updateModelLabel();
-    console.log("已选择 DeepSeek R1 模型");
+    console.log("已选择 DeepSeek Reasoner (R1) 模型");
   });
   
   switcherContainer.appendChild(chatButton);
   switcherContainer.appendChild(reasonerButton);
   
-  // 将切换器添加到模型选择器下方，确保可见
+  // 将切换器添加到模型选择器下方
   const modelSelector = document.querySelector('.model-selector');
   const existingSwitcher = document.querySelector('.deepseek-model-switcher');
   if (existingSwitcher) {
@@ -241,47 +235,42 @@ function createDeepSeekModelSwitcher() {
 // 页面加载时
 document.addEventListener('DOMContentLoaded', () => {
   displayInitialWelcome();
-  // 替换createDeepSeekModelSwitcher函数
-function updateDeepSeekModelSwitcher() {
-    const switcherDiv = document.getElementById('deepseekModelSwitcher');
-    const chatBtn = document.getElementById('deepseekChatBtn');
-    const reasonerBtn = document.getElementById('deepseekReasonerBtn');
-    
-    // 仅在选择DeepSeek时显示
-    switcherDiv.style.display = (getSelectedModel() === 'deepseek') ? 'block' : 'none';
-    
-    // 设置当前激活的按钮样式
-    chatBtn.style.backgroundColor = (currentDeepSeekModel === 'deepseek-chat') ? '#565869' : '#343541';
-    reasonerBtn.style.backgroundColor = (currentDeepSeekModel === 'deepseek-reasoner') ? '#565869' : '#343541';
-    
-    // 更新模型标签
+  
+  // 创建DeepSeek模型切换器
+  createDeepSeekModelSwitcher();
+  
+  // 监听模型选择变化
+  document.getElementById('modelSelect').addEventListener('change', (event) => {
+    const switcherContainer = document.querySelector('.deepseek-model-switcher');
+    if (switcherContainer) {
+      switcherContainer.style.display = event.target.value === 'deepseek' ? 'block' : 'none';
+    }
     updateModelLabel();
-}
+  });
 
-// 页面加载时设置事件监听器
-document.addEventListener('DOMContentLoaded', () => {
-    displayInitialWelcome();
-    
-    // 设置DeepSeek按钮的点击事件
-    document.getElementById('deepseekChatBtn').addEventListener('click', () => {
-        currentDeepSeekModel = 'deepseek-chat';
-        updateDeepSeekModelSwitcher();
-        console.log("已选择 DeepSeek V3 模型");
-    });
-    
-    document.getElementById('deepseekReasonerBtn').addEventListener('click', () => {
-        currentDeepSeekModel = 'deepseek-reasoner';
-        updateDeepSeekModelSwitcher();
-        console.log("已选择 DeepSeek R1 模型");
-    });
-    
-    // 监听模型选择变化
-    document.getElementById('modelSelect').addEventListener('change', () => {
-        updateDeepSeekModelSwitcher();
-    });
-    
-    // 初始化更新一次
-    updateDeepSeekModelSwitcher();
+  // 检查可用模型并更新选择器
+  fetch(`${BACKEND_URL}/`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.availableModels && Array.isArray(data.availableModels)) {
+        const modelSelect = document.getElementById('modelSelect');
+        // 清除现有选项
+        modelSelect.innerHTML = '';
+        // 添加可用模型
+        data.availableModels.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.toLowerCase();
+          option.textContent = model;
+          modelSelect.appendChild(option);
+        });
+      }
+      // 更新模型标签
+      updateModelLabel();
+      // 重新创建DeepSeek模型切换器
+      createDeepSeekModelSwitcher();
+    })
+    .catch(error => console.error('获取可用模型失败:', error));
+});
 
 // 处理用户输入并显示结果
 document.getElementById('submitButton').addEventListener('click', async () => {
