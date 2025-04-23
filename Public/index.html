@@ -3,12 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat</title>
+    <title>小汪助手</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
+    <!-- 登录页面 -->
+    <div id="login-container" class="login-container">
+        <div class="login-box">
+            <h1>您好，欢迎来到小汪助手！</h1>
+            <div class="password-container">
+                <span class="password-label">缘起时间</span>
+                <input type="password" id="passwordInput" placeholder="请输入密码" class="password-input">
+                <button id="loginButton" class="login-button">进入</button>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- 主应用容器 - 初始隐藏 -->
+    <div id="app-container" class="container" style="display: none;">
         <!-- 左侧边栏 -->
         <div class="sidebar">
             <div class="sidebar-header">
@@ -20,7 +34,6 @@
                 <div class="model-selector">
                     <select id="modelSelect">
                         <option value="gpt">GPT</option>
-                        <option value="gemini">Gemini</option>
                         <option value="deepseek">DeepSeek</option>
                     </select>
                 </div>
