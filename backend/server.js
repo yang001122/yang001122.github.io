@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require('openai');
 const path = require('path');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 
 // 中间件
@@ -18,6 +19,7 @@ app.use(express.static(path.join(__dirname, '../Public')));
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const BASE_URL = process.env.BASE_URL || "https://xiaoai.plus/v1";
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // 验证必要的API密钥
 if (!OPENAI_API_KEY) {
@@ -30,6 +32,15 @@ const openai = OPENAI_API_KEY ? new OpenAI({
   baseURL: BASE_URL,
 }) : null;
 
+// 初始化Google Gemini客户端
+let geminiAI = null;
+if (GEMINI_API_KEY) {
+  try {
+    geminiAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  } catch (error) {
+    console.warn("警告：初始化Gemini API客户端失败:", error.message);
+  }
+}
 
 // 初始化DeepSeek客户端 (使用OpenAI兼容接口)
 const deepseek = DEEPSEEK_API_KEY ? new OpenAI({
@@ -41,6 +52,7 @@ const deepseek = DEEPSEEK_API_KEY ? new OpenAI({
 app.get('/', (req, res) => {
   const availableModels = [
     openai ? "GPT" : null,
+    geminiAI ? "Gemini" : null,
     deepseek ? "DeepSeek" : null
   ].filter(Boolean);
   
@@ -87,6 +99,32 @@ app.post('/api/gpt', async (req, res) => {
   }
 });
 
+// 处理Gemini请求
+app.post('/api/gemini', async (req, res) => {
+  if (!geminiAI) {
+    return res.status(503).json({ error: "Gemini API未配置，此功能不可用" });
+  }
+  
+  try {
+    const { prompt } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
+    }
+    
+    const model = geminiAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+    res.json({ choices: [{ message: { content: text } }] });
+  } catch (error) {
+    console.error('调用 Gemini API 时出错:', error);
+    res.status(500).json({
+      error: "调用 Gemini API 时出错",
+      details: error.message || "未知错误"
+    });
+  }
+});
+
 // 处理DeepSeek请求
 app.post('/api/deepseek', async (req, res) => {
   if (!deepseek) {
@@ -99,7 +137,7 @@ app.post('/api/deepseek', async (req, res) => {
     }
     
     // 使用官方文档指定的模型名称
-    const modelName = 'deepseek-chat'; // 固定使用 deepseek-chat 模型
+    const modelName = model === 'deepseek-reasoner' ? 'deepseek-reasoner' : 'deepseek-chat';
     
     console.log(`使用DeepSeek模型: ${modelName}`); // 添加日志以便调试
     
