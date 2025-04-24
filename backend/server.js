@@ -4,13 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 const OpenAI = require('openai');
 const path = require('path');
-const multer = require('multer'); // 引入multer用于处理文件上传
-const fs = require('fs').promises; // 引入fs/promises用于异步文件操作
-
 const app = express();
-
-// 设置文件上传存储
-const upload = multer({ dest: 'uploads/' }); // 文件将临时存储在 'uploads/' 目录下
 
 // 中间件
 app.use(cors({
@@ -20,8 +14,6 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../Public')));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // 允许访问上传的文件 (如果需要的话，通常上传后会处理掉)
-
 
 // 初始化各种API客户端
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -55,56 +47,20 @@ app.get('/', (req, res) => {
   res.json({
     message: '后端服务正常运行！',
     availableModels: availableModels,
-    endpoints: ['/api/gpt', '/api/deepseek', '/api/upload'] // 添加新的上传文件endpoint
+    endpoints: ['/api/gpt', '/api/deepseek']
   });
 });
 
-// 新增文件上传处理接口
-app.post('/api/upload', upload.single('file'), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: '没有上传文件' });
-    }
-
-    const filePath = req.file.path;
-    const originalname = req.file.originalname;
-
-    try {
-        // 简单的文本文件解析示例
-        const fileContent = await fs.readFile(filePath, 'utf8');
-
-        // 在处理完文件后删除临时文件
-        await fs.unlink(filePath);
-
-        res.json({
-            message: '文件上传并解析成功',
-            fileName: originalname,
-            fileContent: fileContent // 将文件内容发送回客户端
-        });
-
-    } catch (error) {
-        console.error('处理文件时出错:', error);
-        // 发生错误时也尝试删除临时文件
-        await fs.unlink(filePath).catch(err => console.error('删除临时文件失败:', err));
-        res.status(500).json({ error: '处理文件时出错', details: error.message });
-    }
-});
-
-
-// 处理GPT请求 (支持流式传输) - 修改以包含文件内容
+// 处理GPT请求 (支持流式传输)
 app.post('/api/gpt', async (req, res) => {
   if (!openai) {
     return res.status(503).json({ error: "OpenAI API未配置，此功能不可用" });
   }
 
   try {
-    const { prompt, fileContent } = req.body; // 接收文件内容
+    const { prompt } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
-    }
-
-    let fullPrompt = prompt;
-    if (fileContent) {
-        fullPrompt = `以下是文件的内容：\n\n${fileContent}\n\n请根据文件内容回答我的问题：${prompt}`;
     }
 
     // 设置响应头，表明使用SSE (Server-Sent Events) 或者简单的流式传输
@@ -114,7 +70,7 @@ app.post('/api/gpt', async (req, res) => {
 
     const stream = await openai.chat.completions.create({
       model: "gpt-3.5-turbo", // 或者你想要使用的其他GPT模型
-      messages: [{ role: "user", content: fullPrompt }], // 使用包含文件内容的fullPrompt
+      messages: [{ role: "user", content: prompt }],
       stream: true, // 启用流式传输
     });
 
@@ -140,20 +96,15 @@ app.post('/api/gpt', async (req, res) => {
   }
 });
 
-// 处理DeepSeek请求 (支持流式传输) - 修改以包含文件内容
+// 处理DeepSeek请求 (支持流式传输)
 app.post('/api/deepseek', async (req, res) => {
   if (!deepseek) {
     return res.status(503).json({ error: "DeepSeek API未配置，此功能不可用" });
   }
   try {
-    const { prompt, fileContent } = req.body; // 接收文件内容
+    const { prompt } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
-    }
-
-    let fullPrompt = prompt;
-    if (fileContent) {
-        fullPrompt = `以下是文件的内容：\n\n${fileContent}\n\n请根据文件内容回答我的问题：${prompt}`;
     }
 
     // 使用固定的deepseek-chat模型
@@ -168,7 +119,7 @@ app.post('/api/deepseek', async (req, res) => {
 
     const stream = await deepseek.chat.completions.create({
       model: modelName,
-      messages: [{ role: "user", content: fullPrompt }], // 使用包含文件内容的fullPrompt
+      messages: [{ role: "user", content: prompt }],
       stream: true, // 启用流式传输
     });
 
