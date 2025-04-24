@@ -46,121 +46,43 @@ app.get('/', (req, res) => {
   res.json({
     message: '后端服务正常运行！',
     availableModels: availableModels,
-    endpoints: ['/api/gpt', '/api/deepseek', '/api/gpt/stream', '/api/deepseek/stream']
+    endpoints: ['/api/gpt', '/api/deepseek']
   });
 });
 
-// 处理GPT流式请求
-app.post('/api/gpt/stream', async (req, res) => {
-  if (!openai) {
-    return res.status(503).json({ error: "OpenAI API未配置，此功能不可用" });
-  }
-  
-  try {
-    const { prompt } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
-    }
-    
-    // 设置SSE响应头
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    
-    const stream = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      stream: true,
-    });
-    
-    // 处理流式响应
-    for await (const chunk of stream) {
-      if (chunk.choices[0]?.delta?.content) {
-        const content = chunk.choices[0].delta.content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-      }
-    }
-    
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-    res.end();
-  } catch (error) {
-    console.error('调用 OpenAI API 时出错:', error);
-    res.write(`data: ${JSON.stringify({ error: "调用 OpenAI API 时出错: " + error.message })}\n\n`);
-    res.end();
-  }
-});
-
-// 处理DeepSeek流式请求
-app.post('/api/deepseek/stream', async (req, res) => {
-  if (!deepseek) {
-    return res.status(503).json({ error: "DeepSeek API未配置，此功能不可用" });
-  }
-  
-  try {
-    const { prompt } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
-    }
-    
-    // 设置SSE响应头
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    
-    // 使用固定的deepseek-chat模型
-    const modelName = 'deepseek-chat';
-    
-    console.log(`使用DeepSeek模型: ${modelName} (流式)`); // 添加日志以便调试
-    
-    const stream = await deepseek.chat.completions.create({
-      model: modelName,
-      messages: [{ role: "user", content: prompt }],
-      stream: true,
-    });
-    
-    // 处理流式响应
-    for await (const chunk of stream) {
-      if (chunk.choices[0]?.delta?.content) {
-        const content = chunk.choices[0].delta.content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-      }
-    }
-    
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-    res.end();
-  } catch (error) {
-    console.error('调用 DeepSeek API 时出错:', error);
-    res.write(`data: ${JSON.stringify({ error: "调用 DeepSeek API 时出错: " + error.message })}\n\n`);
-    res.end();
-  }
-});
-
-// 保留原有的非流式API端点
+// 处理GPT请求 - 支持流式输出
 app.post('/api/gpt', async (req, res) => {
   if (!openai) {
     return res.status(503).json({ error: "OpenAI API未配置，此功能不可用" });
   }
-  
+
   try {
     const { prompt } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
     }
-    
-    const completion = await openai.chat.completions.create({
+
+    const stream = openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
+      stream: true // 启用流式输出
     });
-    
-    if (completion.choices && completion.choices.length > 0) {
-      const reply = completion.choices[0].message.content;
-      res.json({ choices: [{ message: { content: reply } }] });
-    } else {
-      res.status(500).json({
-        error: "调用 OpenAI API 成功但未收到有效的回复",
-        details: completion
-      });
-    }
+
+    stream.on('data', (data) => {
+      const chunk = data.choices[0]?.message?.content;
+      if (chunk) {
+        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+      }
+    });
+
+    stream.on('end', () => {
+      res.end();
+    });
+
+    stream.on('error', (error) => {
+      console.error('Stream error:', error);
+      res.status(500).json({ error: "Stream发生错误", details: error.message });
+    });
   } catch (error) {
     console.error('调用 OpenAI API 时出错:', error);
     res.status(500).json({
