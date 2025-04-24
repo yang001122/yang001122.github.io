@@ -158,11 +158,11 @@ async function handleSubmit() {
   aiMessageDiv.classList.add('ai-message');
   chatDisplay.appendChild(aiMessageDiv); // 先添加到DOM中
 
-  // 添加加载指示器（可选，可以在AI消息容器中显示）
+  // 添加加载指示器
   const loadingIndicator = document.createElement('span');
   loadingIndicator.classList.add('loading-indicator');
   loadingIndicator.textContent = '思考中...';
-  aiMessageDiv.appendChild(loadingIndicator);
+  aiMessageDiv.appendChild(loadingIndicator); // 将加载指示器添加到消息容器中
 
 
   document.getElementById('userInput').value = '';
@@ -175,7 +175,7 @@ async function handleSubmit() {
   modelLabelDiv.textContent = `使用模型: ${modelLabel}`;
   chatDisplay.appendChild(modelLabelDiv);
 
-  // 调用流式API
+  // 调用流式API并处理Markdown渲染
   const fullResponse = await callModelAPI(prompt, aiMessageDiv, loadingIndicator); // 传递aiMessageDiv和loadingIndicator
 
   chatDisplay.scrollTop = chatDisplay.scrollHeight;
@@ -204,10 +204,11 @@ function displayInitialWelcome() {
   chatDisplay.appendChild(welcomeMessage);
 }
 
-// 调用后端API与不同模型交互 (处理流式响应)
+// 调用后端API与不同模型交互 (处理流式响应并渲染Markdown)
 async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
   const selectedModel = getSelectedModel();
-  let fullResponseContent = ''; // 用于存储完整的AI响应
+  let fullResponseContent = ''; // 用于存储完整的AI响应（Markdown格式）
+  let accumulatedText = ''; // 用于累积流式接收到的文本
 
   try {
     // 设置请求超时
@@ -253,9 +254,7 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
       done = readerDone;
       const chunk = decoder.decode(value, { stream: true });
 
-      // 处理接收到的数据块
-      // 这里的处理需要根据后端实际发送的数据格式来调整
-      // 假设后端发送的是 SSE 格式，每条消息以 data: 开始
+      // 处理接收到的数据块 (SSE 格式)
       const lines = chunk.split('\n');
       for (const line of lines) {
           if (line.startsWith('data: ')) {
@@ -267,9 +266,18 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
               try {
                   const json = JSON.parse(data);
                   if (json.content) {
-                      // 将接收到的内容添加到AI消息容器中
-                      aiMessageDiv.textContent += json.content;
-                      fullResponseContent += json.content; // 累加完整响应
+                      // 累积接收到的文本
+                      accumulatedText += json.content;
+                      fullResponseContent += json.content; // 也累加用于历史记录
+
+                      // 解析Markdown并清理HTML
+                      // 确保 marked 和 DOMPurify 已经通过 CDN 或其他方式加载
+                      const html = marked.parse(accumulatedText);
+                      const sanitizedHtml = DOMPurify.sanitize(html);
+
+                      // 更新AI消息容器的innerHTML
+                      aiMessageDiv.innerHTML = sanitizedHtml;
+
                       // 保持滚动到底部
                       aiMessageDiv.parentNode.scrollTop = aiMessageDiv.parentNode.scrollHeight;
                   } else if (json.error) {
@@ -287,7 +295,7 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
       }
     }
 
-    return fullResponseContent; // 返回完整的AI响应
+    return fullResponseContent; // 返回完整的AI响应 (Markdown格式)
 
   } catch (error) {
     console.error('错误:', error);
@@ -303,6 +311,7 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
 
 
 // 将消息添加到历史记录
+// 注意：这里将原始Markdown文本存储在 historyItem 的 dataset 中
 function updateHistory(userPrompt, aiResponse) {
   const historyDisplay = document.getElementById('history-display');
   const historyItem = document.createElement('div');
@@ -313,16 +322,19 @@ function updateHistory(userPrompt, aiResponse) {
   historyTextSpan.classList.add('history-text');
   const historyText = userPrompt.substring(0, 50) + (userPrompt.length > 50 ? '...' : '');
   historyTextSpan.textContent = historyText;
-  historyTextSpan.title = `User: ${userPrompt}\nAI: ${aiResponse}`; // 完整文本的提示
+  // 提示显示用户输入和AI响应的简略或完整内容
+  historyTextSpan.title = `User: ${userPrompt}\nAI: ${aiResponse.substring(0, 100)}...`; // 提示只显示AI响应的前100字
 
   // 存储完整对话数据以便后续加载
   historyItem.dataset.userPrompt = userPrompt;
-  historyItem.dataset.aiResponse = aiResponse;
+  // 在 dataset 中存储原始的 Markdown 文本
+  historyItem.dataset.aiResponseMarkdown = aiResponse;
   historyItem.dataset.model = getSelectedModel(); // 记录使用的模型
 
   // 添加点击监听器到文本部分以加载对话
   historyTextSpan.addEventListener('click', () => {
-    loadHistoryToChat(historyItem.dataset.userPrompt, historyItem.dataset.aiResponse);
+    // 从 dataset 中读取存储的原始 Markdown 文本进行加载
+    loadHistoryToChat(historyItem.dataset.userPrompt, historyItem.dataset.aiResponseMarkdown);
     // 自动选择之前使用的模型
     document.getElementById('modelSelect').value = historyItem.dataset.model;
     updateModelLabel();
@@ -351,7 +363,8 @@ function updateHistory(userPrompt, aiResponse) {
 }
 
 // 加载历史对话到聊天区域
-function loadHistoryToChat(userPrompt, aiResponse) {
+// 现在这个函数会接收并渲染 Markdown 文本
+function loadHistoryToChat(userPrompt, aiResponseMarkdown) {
   const chatDisplay = document.getElementById('chat-display');
   chatDisplay.innerHTML = '';
 
@@ -362,7 +375,13 @@ function loadHistoryToChat(userPrompt, aiResponse) {
 
   const aiMessageDiv = document.createElement('div');
   aiMessageDiv.classList.add('ai-message');
-  aiMessageDiv.textContent = `${aiResponse}`;
+
+  // 对存储的AI响应（Markdown）进行渲染和清理
+  // 确保 marked 和 DOMPurify 已经通过 CDN 或其他方式加载
+  const html = marked.parse(aiResponseMarkdown);
+  const sanitizedHtml = DOMPurify.sanitize(html);
+  aiMessageDiv.innerHTML = sanitizedHtml;
+
   chatDisplay.appendChild(aiMessageDiv);
 
   chatDisplay.scrollTop = chatDisplay.scrollHeight;

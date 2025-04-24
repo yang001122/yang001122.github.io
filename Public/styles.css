@@ -110,6 +110,7 @@ body {
    display: flex;
    width: 100%;
    height: 100%;
+   position: relative; /* 添加position relative，方便内部absolute定位 */
 }
 
 /* 左侧边栏 */
@@ -281,7 +282,9 @@ body {
    padding: 16px;
    margin-bottom: 20px;
    border-radius: 6px;
-   line-height: 1.5;
+   line-height: 1.6; /* 调整行高以提高可读性 */
+   word-wrap: break-word; /* 防止长单词或URL溢出 */
+   white-space: pre-wrap; /* 保留空白符和换行符 */
 }
 
 .user-message {
@@ -299,43 +302,165 @@ body {
    font-size: 18px;
 }
 
-.model-label {
+/* 添加的模型类型指示器样式 */
+.model-type-indicator {
+   position: absolute; /* 相对于父容器定位 */
+   top: 10px;
+   right: 10px;
+   background: #444654;
+   padding: 5px 10px;
+   border-radius: 4px;
    font-size: 12px;
-   color: #8e8ea0;
-   text-align: center;
-   margin-top: 5px;
-   font-style: italic;
+   color: #e0e0e0;
+   z-index: 10;
 }
+
+
+/* 加载指示器样式 */
+.loading-indicator::after {
+    content: '...'; /* 或者其他动画效果 */
+    animation: typing 1s infinite;
+}
+
+@keyframes typing {
+    0%, 100% { content: ''; }
+    33% { content: '.'; }
+    66% { content: '..'; }
+    100% { content: '...'; }
+}
+
+
+/* 添加或修改以下样式来美化Markdown渲染 */
+.ai-message p {
+    margin-bottom: 1em; /* 段落下边距 */
+}
+
+.ai-message ul,
+.ai-message ol {
+    margin-bottom: 1em; /* 列表下边距 */
+    padding-left: 20px; /* 列表左边距 */
+    /* 确保列表项样式正常显示 */
+    list-style-type: disc; /* 或者 square; circle; for ul */
+}
+
+.ai-message ol {
+     list-style-type: decimal; /* 有序列表使用数字 */
+}
+
+
+.ai-message li {
+    margin-bottom: 0.5em; /* 列表项下边距 */
+}
+
+.ai-message pre {
+    background-color: #2d2d2d; /* 代码块背景色 */
+    color: #cccccc; /* 代码颜色 */
+    padding: 15px; /* 增加内边距 */
+    border-radius: 6px; /* 更大的圆角 */
+    overflow-x: auto; /* 水平滚动 */
+    margin-bottom: 1em;
+    white-space: pre-wrap; /* 自动换行 */
+    word-wrap: break-word; /* 单词内部换行 */
+}
+
+.ai-message code {
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; /* 代码字体 */
+    /* 行内代码样式 */
+    background-color: #3d3d3d;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.ai-message pre code {
+    padding: 0;
+    background-color: transparent; /* 代码块内的 code 不需要背景色 */
+}
+
+.ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4, .ai-message h5, .ai-message h6 {
+    margin-top: 1.5em; /* 标题上边距 */
+    margin-bottom: 1em; /* 标题下边距 */
+    color: #fff; /* 标题颜色 */
+}
+
+.ai-message h1 { font-size: 1.8em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em;}
+.ai-message h2 { font-size: 1.5em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em;}
+.ai-message h3 { font-size: 1.3em; }
+.ai-message h4 { font-size: 1.1em; }
+.ai-message h5 { font-size: 1em; }
+.ai-message h6 { font-size: 0.9em; color: #8e8ea0;}
+
+.ai-message blockquote {
+    border-left: 4px solid #565869;
+    padding-left: 1em;
+    margin-left: 0;
+    font-style: italic;
+    color: #8e8ea0;
+    margin-bottom: 1em;
+}
+
+.ai-message table {
+    border-collapse: collapse;
+    margin-bottom: 1em;
+    width: 100%;
+}
+
+.ai-message th, .ai-message td {
+    border: 1px solid #4d4d4f;
+    padding: 8px;
+    text-align: left;
+}
+
+.ai-message th {
+    background-color: #343541;
+}
+
+.ai-message a {
+    color: #55a5ff; /* 链接颜色 */
+    text-decoration: none;
+}
+
+.ai-message a:hover {
+    text-decoration: underline;
+}
+
 
 /* 响应式设计 */
 @media (max-width: 768px) {
    .container {
        flex-direction: column;
    }
-   
+
    .sidebar {
        width: 100%;
        height: 200px;
        border-right: none;
        border-bottom: 1px solid #4d4d4f;
    }
-   
+
    .chat-area {
        height: calc(100% - 200px);
    }
-   
+
    .password-container {
        flex-direction: column;
        align-items: stretch;
    }
-   
+
    .password-label {
        margin-bottom: 10px;
        text-align: left;
    }
-   
+
    .password-input {
        margin-right: 0;
        margin-bottom: 10px;
+   }
+
+   /* 响应式调整模型类型指示器位置 */
+   .model-type-indicator {
+       position: static; /* 在小屏幕上恢复静态定位 */
+       margin-bottom: 10px; /* 添加底部外边距 */
+       text-align: center;
    }
 }
