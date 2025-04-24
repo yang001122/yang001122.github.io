@@ -32,7 +32,23 @@ body {
    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
    width: 80%;
    max-width: 500px;
+   display: flex; /* 使用 Flexbox 布局 */
+   flex-direction: column; /* 元素垂直排列 */
+   align-items: center; /* 水平居中 */
 }
+
+/* 添加的图片样式 */
+.login-image {
+    max-width: 100%; /* 图片最大宽度不超过容器 */
+    height: auto; /* 高度自适应 */
+    margin-bottom: 20px; /* 图片下方留白 */
+    /* 如果父容器是 Flexbox 并设置了 align-items: center，则图片会自动水平居中 */
+    /* 如果不使用 Flexbox，可以使用 display: block; margin: 0 auto; 来居中块级元素 */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 
 .login-box h1 {
    margin-bottom: 30px;
