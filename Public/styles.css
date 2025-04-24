@@ -282,7 +282,7 @@ body {
    padding: 16px;
    margin-bottom: 20px;
    border-radius: 6px;
-   line-height: 1.6; /* 调整行高以提高可读性 */
+   line-height: 1.5; /* 调整行高，可以根据需要微调 */
    word-wrap: break-word; /* 防止长单词或URL溢出 */
    white-space: pre-wrap; /* 保留空白符和换行符 */
 }
@@ -330,16 +330,17 @@ body {
 }
 
 
-/* 添加或修改以下样式来美化Markdown渲染 */
+/* Markdown 渲染元素的样式调整 */
 .ai-message p {
-    margin-bottom: 1em; /* 段落下边距 */
+    margin-top: 0.5em; /* 段落上边距，减小 */
+    margin-bottom: 0.5em; /* 段落下边距，减小 */
 }
 
 .ai-message ul,
 .ai-message ol {
-    margin-bottom: 1em; /* 列表下边距 */
+    margin-top: 0.5em; /* 列表上边距，减小 */
+    margin-bottom: 0.5em; /* 列表下边距，减小 */
     padding-left: 20px; /* 列表左边距 */
-    /* 确保列表项样式正常显示 */
     list-style-type: disc; /* 或者 square; circle; for ul */
 }
 
@@ -347,25 +348,24 @@ body {
      list-style-type: decimal; /* 有序列表使用数字 */
 }
 
-
 .ai-message li {
-    margin-bottom: 0.5em; /* 列表项下边距 */
+    margin-bottom: 0.3em; /* 列表项下边距，减小 */
 }
 
 .ai-message pre {
     background-color: #2d2d2d; /* 代码块背景色 */
     color: #cccccc; /* 代码颜色 */
-    padding: 15px; /* 增加内边距 */
-    border-radius: 6px; /* 更大的圆角 */
-    overflow-x: auto; /* 水平滚动 */
-    margin-bottom: 1em;
-    white-space: pre-wrap; /* 自动换行 */
-    word-wrap: break-word; /* 单词内部换行 */
+    padding: 12px; /* 代码块内边距，减小 */
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-top: 0.8em; /* 代码块上边距，减小 */
+    margin-bottom: 0.8em; /* 代码块下边距，减小 */
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .ai-message code {
-    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; /* 代码字体 */
-    /* 行内代码样式 */
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
     background-color: #3d3d3d;
     padding: 2px 4px;
     border-radius: 3px;
@@ -374,21 +374,21 @@ body {
 
 .ai-message pre code {
     padding: 0;
-    background-color: transparent; /* 代码块内的 code 不需要背景色 */
+    background-color: transparent;
 }
 
 .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4, .ai-message h5, .ai-message h6 {
-    margin-top: 1.5em; /* 标题上边距 */
-    margin-bottom: 1em; /* 标题下边距 */
-    color: #fff; /* 标题颜色 */
+    margin-top: 1.2em; /* 标题上边距，减小 */
+    margin-bottom: 0.8em; /* 标题下边距，减小 */
+    color: #fff;
 }
 
-.ai-message h1 { font-size: 1.8em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em;}
-.ai-message h2 { font-size: 1.5em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em;}
-.ai-message h3 { font-size: 1.3em; }
-.ai-message h4 { font-size: 1.1em; }
-.ai-message h5 { font-size: 1em; }
-.ai-message h6 { font-size: 0.9em; color: #8e8ea0;}
+.ai-message h1 { font-size: 1.7em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em;}
+.ai-message h2 { font-size: 1.4em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em;}
+.ai-message h3 { font-size: 1.2em; }
+.ai-message h4 { font-size: 1em; }
+.ai-message h5 { font-size: 0.9em; }
+.ai-message h6 { font-size: 0.8em; color: #8e8ea0;}
 
 .ai-message blockquote {
     border-left: 4px solid #565869;
@@ -396,12 +396,14 @@ body {
     margin-left: 0;
     font-style: italic;
     color: #8e8ea0;
-    margin-bottom: 1em;
+    margin-top: 0.8em; /* 引用块上边距，减小 */
+    margin-bottom: 0.8em; /* 引用块下边距，减小 */
 }
 
 .ai-message table {
     border-collapse: collapse;
-    margin-bottom: 1em;
+    margin-top: 0.8em; /* 表格上边距，减小 */
+    margin-bottom: 0.8em; /* 表格下边距，减小 */
     width: 100%;
 }
 
@@ -416,7 +418,7 @@ body {
 }
 
 .ai-message a {
-    color: #55a5ff; /* 链接颜色 */
+    color: #55a5ff;
     text-decoration: none;
 }
 
