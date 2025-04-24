@@ -1,6 +1,8 @@
-//代码内容：script.js
+// 代码内容：script.js
 const BACKEND_URL = 'http://165.232.161.255:3000'; // 后端URL
 const CORRECT_PASSWORD = '20191130'; // 正确的密码
+
+let abortController = null; // Global variable to hold AbortController
 
 // 页面加载时
 document.addEventListener('DOMContentLoaded', () => {
@@ -70,11 +72,21 @@ function initializeApp() {
     }
   });
 
+  // 绑定停止按钮事件
+  document.getElementById('stopButton').addEventListener('click', handleStop);
+
   // 绑定新建对话按钮
   document.getElementById('newChatButton').addEventListener('click', () => {
     document.getElementById('userInput').value = '';
     document.getElementById('chat-display').innerHTML = '';
     displayInitialWelcome();
+    // Also reset stop button state on new chat
+    document.getElementById('stopButton').style.display = 'none';
+    document.getElementById('submitButton').style.display = 'inline-block';
+    if (abortController) {
+        abortController.abort(); // Abort any ongoing request
+        abortController = null;
+    }
   });
 
   // 绑定历史记录搜索
@@ -175,19 +187,62 @@ async function handleSubmit() {
   modelLabelDiv.textContent = `使用模型: ${modelLabel}`;
   chatDisplay.appendChild(modelLabelDiv);
 
+  // Disable submit button and enable stop button
+  document.getElementById('submitButton').style.display = 'none';
+  document.getElementById('stopButton').style.display = 'inline-block';
+
+  // Initialize AbortController
+  abortController = new AbortController();
+  const signal = abortController.signal;
+
   // 调用流式API并处理Markdown渲染
-  const fullResponse = await callModelAPI(prompt, aiMessageDiv, loadingIndicator); // 传递aiMessageDiv和loadingIndicator
+  const fullResponse = await callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal); // Pass signal
 
   chatDisplay.scrollTop = chatDisplay.scrollHeight;
 
-  // 更新左侧历史记录 (使用完整的AI响应)
-  if (fullResponse) {
+  // Reset button states and abortController
+  document.getElementById('stopButton').style.display = 'none';
+  document.getElementById('submitButton').style.display = 'inline-block';
+  abortController = null;
+
+
+  // Update history only if the response was not aborted
+  if (fullResponse && !signal.aborted) {
       updateHistory(prompt, fullResponse);
+  } else if (signal.aborted) {
+       console.log("Request was aborted. Not updating history.");
+       // Optionally update the AI message div to indicate it was stopped
+       if (aiMessageDiv && !aiMessageDiv.textContent.includes("已停止")) {
+            aiMessageDiv.innerHTML += '<br>对话已停止。';
+            // Update the fullResponseContent to reflect the stop for history or not add to history at all
+            // For now, let's not add aborted conversations to history
+       }
   } else {
-      // 如果发生错误没有完整响应，可以考虑记录用户输入或错误信息
+      // If there was an error and not aborted
       updateHistory(prompt, "响应出错或为空");
   }
 }
+
+// Handle stop button click
+function handleStop() {
+    if (abortController) {
+        console.log("Aborting request...");
+        abortController.abort();
+        abortController = null;
+
+        // Update UI
+        document.getElementById('stopButton').style.display = 'none';
+        document.getElementById('submitButton').style.display = 'inline-block';
+
+        // Optional: Display a message in the chat indicating the stop
+        const chatDisplay = document.getElementById('chat-display');
+        const lastAiMessage = chatDisplay.querySelector('.ai-message:last-child');
+        if (lastAiMessage && !lastAiMessage.textContent.includes("已停止")) {
+            lastAiMessage.innerHTML += '<br>对话已停止。';
+        }
+    }
+}
+
 
 // 动态获取选择的模型
 function getSelectedModel() {
@@ -205,15 +260,19 @@ function displayInitialWelcome() {
 }
 
 // 调用后端API与不同模型交互 (处理流式响应并渲染Markdown)
-async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
+async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { // Accept signal
   const selectedModel = getSelectedModel();
   let fullResponseContent = ''; // 用于存储完整的AI响应（Markdown格式）
   let accumulatedText = ''; // 用于累积流式接收到的文本
 
   try {
-    // 设置请求超时
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 延长超时时间，例如120秒
+    // Set timeout with AbortController
+    const timeoutId = setTimeout(() => {
+        if (abortController) { // Check if abortController still exists
+            abortController.abort();
+            console.log("Request timed out.");
+        }
+    }, 120000); // Extended timeout
 
     // 根据选择的模型确定API端点
     let url = `${BACKEND_URL}/api/${selectedModel}`;
@@ -228,10 +287,10 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
-      signal: controller.signal
+      signal: signal // Pass the signal here
     });
 
-    // 清除超时
+    // Clear timeout if fetch is successful (or aborted)
     clearTimeout(timeoutId);
 
     if (!response.ok) {
@@ -253,6 +312,12 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
       const { value, done: readerDone } = await reader.read();
       done = readerDone;
       const chunk = decoder.decode(value, { stream: true });
+
+      // Handle abort signal during reading
+      if (signal.aborted) {
+          console.log("Read stream aborted.");
+          break;
+      }
 
       // 处理接收到的数据块 (SSE 格式)
       const lines = chunk.split('\n');
@@ -278,8 +343,14 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
                       // 更新AI消息容器的innerHTML
                       aiMessageDiv.innerHTML = sanitizedHtml;
 
-                      // 保持滚动到底部
-                      aiMessageDiv.parentNode.scrollTop = aiMessageDiv.parentNode.scrollHeight;
+                      // Keep scrolling to the bottom only if the user hasn't scrolled up
+                       const chatDisplay = document.getElementById('chat-display');
+                       const isAtBottom = chatDisplay.scrollHeight - chatDisplay.clientHeight <= chatDisplay.scrollTop + 1; // Add a small buffer
+                       if (isAtBottom) {
+                           chatDisplay.scrollTop = chatDisplay.scrollHeight;
+                       }
+
+
                   } else if (json.error) {
                        // 显示后端返回的错误信息
                        aiMessageDiv.textContent = `错误：${json.details || json.error}`;
@@ -292,20 +363,50 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator) {
                   // 可以选择显示解析错误或忽略
               }
           }
+          // Check abort signal after processing each line
+           if (signal.aborted) {
+              console.log("Processing lines aborted.");
+              done = true; // Ensure loop terminates
+              break;
+          }
       }
     }
+
+    // If the loop finished but not by [DONE], check if it was aborted
+    if (!done && signal.aborted) {
+        console.log("Stream reading finished due to abortion.");
+        return null; // Or return partial content if needed
+    }
+
 
     return fullResponseContent; // 返回完整的AI响应 (Markdown格式)
 
   } catch (error) {
     console.error('错误:', error);
-    // 移除加载指示器（如果还在）
+    // Remove loading indicator (if still present)
     if (loadingIndicator && loadingIndicator.parentNode) {
         loadingIndicator.parentNode.removeChild(loadingIndicator);
     }
-    // 在AI消息容器中显示错误信息
-    aiMessageDiv.textContent = `错误：无法获取模型响应 - ${error.message}`;
-    return aiMessageDiv.textContent; // 返回错误信息作为完整响应
+
+    // Handle abort error specifically
+    if (error.name === 'AbortError') {
+        console.log('Fetch aborted by user action.');
+        // Update AI message to indicate the conversation was stopped
+        if (aiMessageDiv && !aiMessageDiv.textContent.includes("已停止")) {
+             aiMessageDiv.innerHTML += '<br>对话已停止。';
+        }
+        return null; // Indicate that the response was aborted
+
+    } else {
+        // In case of other errors, display the error message
+        aiMessageDiv.textContent = `错误：无法获取模型响应 - ${error.message}`;
+        return aiMessageDiv.textContent; // Return error message as full response
+    }
+  } finally {
+      // Ensure buttons are reset even if there's an error
+      document.getElementById('stopButton').style.display = 'none';
+      document.getElementById('submitButton').style.display = 'inline-block';
+      abortController = null; // Clear abortController
   }
 }
 
@@ -338,6 +439,13 @@ function updateHistory(userPrompt, aiResponse) {
     // 自动选择之前使用的模型
     document.getElementById('modelSelect').value = historyItem.dataset.model;
     updateModelLabel();
+    // Hide stop button when loading history
+    document.getElementById('stopButton').style.display = 'none';
+    document.getElementById('submitButton').style.display = 'inline-block';
+     if (abortController) { // Abort any ongoing request if loading history
+        abortController.abort();
+        abortController = null;
+     }
   });
 
   // 创建删除图标容器
@@ -441,13 +549,23 @@ document.getElementById('newChatButton').addEventListener('click', () => {
   document.getElementById('userInput').value = '';
   document.getElementById('chat-display').innerHTML = '';
   displayInitialWelcome();
+   // Also reset stop button state on new chat
+    document.getElementById('stopButton').style.display = 'none';
+    document.getElementById('submitButton').style.display = 'inline-block';
+    if (abortController) { // Abort any ongoing request
+        abortController.abort();
+        abortController = null;
+    }
 });
 
 // 按下 Enter 键发送消息
 document.getElementById('userInput').addEventListener('keydown', function(event) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
-    document.getElementById('submitButton').click();
+    // Check if a request is already in progress before submitting
+    if (!abortController) {
+        document.getElementById('submitButton').click();
+    }
   }
 });
 

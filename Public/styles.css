@@ -1,3 +1,4 @@
+/* 代码内容：styles.css */
 /* 页面全局样式 */
 body {
    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -263,7 +264,7 @@ body {
    outline: none;
 }
 
-.attachment-button, .send-button {
+.attachment-button, .send-button, .stop-button {
    background: none;
    border: none;
    color: #8e8ea0;
@@ -273,8 +274,17 @@ body {
    transition: color 0.2s;
 }
 
-.attachment-button:hover, .send-button:hover {
+.attachment-button:hover, .send-button:hover, .stop-button:hover {
    color: #fff;
+}
+
+.stop-button {
+    color: #ff5555; /* Red color for stop button */
+    margin-left: 8px; /* Add some space between send and stop buttons */
+}
+
+.stop-button:hover {
+    color: #ff8888;
 }
 
 /* 聊天消息样式 */
