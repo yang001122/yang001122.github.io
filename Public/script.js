@@ -1,8 +1,10 @@
+//代码内容：script.js
 // 代码内容：script.js
 const BACKEND_URL = 'http://165.232.161.255:3000'; // 后端URL
 const CORRECT_PASSWORD = '20191130'; // 正确的密码
 
 let abortController = null; // Global variable to hold AbortController
+let uploadedFileContent = null; // Variable to store uploaded file content
 
 // 页面加载时
 document.addEventListener('DOMContentLoaded', () => {
@@ -87,6 +89,7 @@ function initializeApp() {
         abortController.abort(); // Abort any ongoing request
         abortController = null;
     }
+    uploadedFileContent = null; // Reset uploaded file content on new chat
   });
 
   // 绑定历史记录搜索
@@ -105,12 +108,8 @@ function initializeApp() {
   });
 
   // 处理文件输入
-  document.getElementById('fileInput').addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      alert(`文件选中: ${file.name}. 文件上传功能需要后端支持。`);
-    }
-  });
+  document.getElementById('fileInput').addEventListener('change', handleFileUpload); // 修改为调用新的文件上传处理函数
+
 
   // 检查可用模型并更新选择器
   fetch(`${BACKEND_URL}/`)
@@ -147,10 +146,55 @@ function initializeApp() {
    document.getElementById('modelSelect').addEventListener('change', updateModelLabel);
 }
 
+// 处理文件上传
+async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    // 显示文件上传中的提示
+    const chatDisplay = document.getElementById('chat-display');
+    const fileMessageDiv = document.createElement('div');
+    fileMessageDiv.classList.add('user-message'); // 可以使用用户消息样式或者新的样式
+    fileMessageDiv.textContent = `正在上传文件: ${file.name}...`;
+    chatDisplay.appendChild(fileMessageDiv);
+    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/upload`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            fileMessageDiv.textContent = `文件 "${result.fileName}" 上传并解析成功。内容已准备好用于对话。`;
+            uploadedFileContent = result.fileContent; // 存储解析后的文件内容
+        } else {
+            fileMessageDiv.textContent = `文件上传失败: ${result.error || '未知错误'}`;
+            uploadedFileContent = null; // 清除文件内容
+        }
+    } catch (error) {
+        console.error('文件上传出错:', error);
+        fileMessageDiv.textContent = `文件上传出错: ${error.message}`;
+        uploadedFileContent = null; // 清除文件内容
+    }
+
+    // 清空文件输入，以便再次上传同一个文件（如果需要）
+    event.target.value = '';
+    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+}
+
+
 // 处理用户输入并提交
 async function handleSubmit() {
   const prompt = document.getElementById('userInput').value.trim();
-  if (!prompt) {
+  if (!prompt && !uploadedFileContent) { // 如果prompt为空且没有上传文件内容，则不发送
     return;
   }
 
@@ -160,9 +204,14 @@ async function handleSubmit() {
     chatDisplay.removeChild(initialWelcome);
   }
 
+  // 显示用户消息 (包含prompt和文件信息，如果存在)
   const userMessageDiv = document.createElement('div');
   userMessageDiv.classList.add('user-message');
-  userMessageDiv.textContent = `${prompt}`;
+  let userMessageText = prompt;
+  if (uploadedFileContent) {
+      userMessageText = `[文件已上传并解析] ${prompt}`; // 提示用户文件已包含
+  }
+  userMessageDiv.textContent = userMessageText;
   chatDisplay.appendChild(userMessageDiv);
 
   // 创建AI消息容器，用于逐步填充内容
@@ -177,7 +226,8 @@ async function handleSubmit() {
   aiMessageDiv.appendChild(loadingIndicator); // 将加载指示器添加到消息容器中
 
 
-  document.getElementById('userInput').value = '';
+  document.getElementById('userInput').value = ''; // 清空输入框
+  uploadedFileContent = null; // 清空已上传的文件内容，它会随当前请求一起发送
 
   const selectedModel = getSelectedModel();
   let modelLabel = selectedModel.toUpperCase();
@@ -195,8 +245,8 @@ async function handleSubmit() {
   abortController = new AbortController();
   const signal = abortController.signal;
 
-  // 调用流式API并处理Markdown渲染
-  const fullResponse = await callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal); // Pass signal
+  // 调用流式API并处理Markdown渲染，传递文件内容
+  const fullResponse = await callModelAPI(prompt, uploadedFileContent, aiMessageDiv, loadingIndicator, signal); // Pass fileContent
 
   chatDisplay.scrollTop = chatDisplay.scrollHeight;
 
@@ -259,8 +309,8 @@ function displayInitialWelcome() {
   chatDisplay.appendChild(welcomeMessage);
 }
 
-// 调用后端API与不同模型交互 (处理流式响应并渲染Markdown)
-async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { // Accept signal
+// 调用后端API与不同模型交互 (处理流式响应并渲染Markdown) - 传递文件内容
+async function callModelAPI(prompt, fileContent, aiMessageDiv, loadingIndicator, signal) { // Accept fileContent
   const selectedModel = getSelectedModel();
   let fullResponseContent = ''; // 用于存储完整的AI响应（Markdown格式）
   let accumulatedText = ''; // 用于累积流式接收到的文本
@@ -277,6 +327,12 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
     // 根据选择的模型确定API端点
     let url = `${BACKEND_URL}/api/${selectedModel}`;
     let requestBody = { prompt: prompt };
+
+     // 如果存在文件内容，添加到请求体中
+    if (fileContent) {
+        requestBody.fileContent = fileContent;
+    }
+
 
     // 如果是DeepSeek模型，设置固定为deepseek-chat
     if (selectedModel === 'deepseek') {
@@ -446,6 +502,7 @@ function updateHistory(userPrompt, aiResponse) {
         abortController.abort();
         abortController = null;
      }
+     uploadedFileContent = null; // Reset uploaded file content when loading history
   });
 
   // 创建删除图标容器
@@ -536,13 +593,7 @@ document.getElementById('searchInput').addEventListener('input', function () {
   });
 });
 
-// 处理文件输入
-document.getElementById('fileInput').addEventListener('change', (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    alert(`文件选中: ${file.name}. 文件上传功能需要后端支持。`);
-  }
-});
+// 处理文件输入 - 已经移动到 initializeApp 中绑定
 
 // 新建对话按钮功能
 document.getElementById('newChatButton').addEventListener('click', () => {
@@ -556,6 +607,7 @@ document.getElementById('newChatButton').addEventListener('click', () => {
         abortController.abort();
         abortController = null;
     }
+    uploadedFileContent = null; // Reset uploaded file content on new chat
 });
 
 // 按下 Enter 键发送消息
