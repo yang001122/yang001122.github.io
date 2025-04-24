@@ -324,6 +324,8 @@ async function callModelAPI(prompt) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let result = "";
+    let buffer = ""; // 用于暂存未完整解析的行
+
 
     // 返回一个Promise，用于控制流式内容的显示
     return {
@@ -333,27 +335,83 @@ async function callModelAPI(prompt) {
             const { value, done } = await reader.read();
 
             if (done) {
+               // 处理剩余的 buffer
+              if (buffer.length > 0) {
+                 // 尝试处理最后一部分内容，如果不是 done: true
+                 try {
+                    if (buffer.startsWith("data:")) {
+                        const jsonString = buffer.substring(5).trim();
+                        if (jsonString === '[DONE]') {
+                            // 忽略 DONE 标记
+                        } else {
+                             const data = JSON.parse(jsonString);
+                             if (data.content) {
+                                 result += data.content;
+                                 // 触发更新事件，让外部知道有新内容
+                                 document.dispatchEvent(new CustomEvent('aiResponseChunk', {
+                                     detail: { chunk: data.content, fullContent: result }
+                                 }));
+                             }
+                        }
+                    }
+                 } catch (e) {
+                     console.error("解析最后一块数据时出错:", e, "原始数据:", buffer);
+                 }
+              }
               resolve(result);
               break;
             }
 
             // 解码接收到的数据块
             const chunk = decoder.decode(value, { stream: true });
-            result += chunk;
+            buffer += chunk; // 将新块添加到 buffer
 
-            // 触发更新事件，让外部知道有新内容
-            document.dispatchEvent(new CustomEvent('aiResponseChunk', {
-              detail: { chunk, fullContent: result }
-            }));
+            // 按行处理 buffer
+            const lines = buffer.split('\\n');
+            buffer = lines.pop(); // 最后一行可能不完整，放回 buffer
+
+            for (const line of lines) {
+              if (line.startsWith("data:")) {
+                const jsonString = line.substring(5).trim();
+                if (jsonString === '[DONE]') {
+                  // 忽略 DONE 标记，表示流结束
+                  reader.cancel(); // 取消读取
+                  resolve(result);
+                  return; // 提前退出循环和函数
+                }
+                try {
+                  const data = JSON.parse(jsonString);
+                  if (data.content) {
+                    result += data.content;
+                    // 触发更新事件，让外部知道有新内容
+                    document.dispatchEvent(new CustomEvent('aiResponseChunk', {
+                      detail: { chunk: data.content, fullContent: result }
+                    }));
+                  }
+                } catch (e) {
+                  console.error("解析数据块时出错:", e, "原始数据:", line);
+                  // 可以选择在这里 reject Promise 或跳过此行
+                }
+              } else {
+                 // 如果不是 data: 开头的行，可能是非标准的流数据，
+                 // 或者多行数据块的情况，这里简单地附加到结果
+                 // 注意：这取决于你的后端实际的流式输出格式
+                 result += line + '\\n'; // 附加非 data: 开头的行，并加上换行
+                  document.dispatchEvent(new CustomEvent('aiResponseChunk', {
+                      detail: { chunk: line + '\\n', fullContent: result }
+                  }));
+              }
+            }
           }
         } catch (error) {
+          console.error('流读取错误:', error);
           reject(error);
         }
       }),
       initialContent: "" // 初始内容为空字符串
     };
   } catch (error) {
-    console.error('错误:', error);
+    console.error('API调用错误:', error);
     return {
       streamComplete: Promise.resolve(`错误：无法获取模型响应 - ${error.message}`),
       initialContent: `错误：无法获取模型响应 - ${error.message}`
