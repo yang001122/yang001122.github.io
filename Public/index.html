@@ -6,9 +6,9 @@
     <title>小汪助手</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+    <!-- 登录页面 -->
     <div id="login-container" class="login-container">
         <div class="login-box">
             <h1>您好，欢迎来到小汪助手！</h1>
@@ -21,7 +21,9 @@
         </div>
     </div>
 
+    <!-- 主应用容器 - 初始隐藏 -->
     <div id="app-container" class="container" style="display: none;">
+        <!-- 左侧边栏 -->
         <div class="sidebar">
             <div class="sidebar-header">
                 <div class="new-chat-button" id="newChatButton">
@@ -31,20 +33,24 @@
             <div class="sidebar-content">
                 <div class="model-selector">
                     <select id="modelSelect">
-                        <option value="gpt">GPT (加载中...)</option>
+                        <option value="gpt">GPT</option>
+                        <option value="deepseek">DeepSeek</option>
                     </select>
                 </div>
                 <div class="history-search-bar">
                     <input type="text" id="searchInput" placeholder="搜索历史..." class="search-input">
                 </div>
                 <div id="history-display" class="history-display">
-                    </div>
+                    <!-- 历史记录项会在这里动态添加 -->
+                </div>
             </div>
         </div>
-
+        
+        <!-- 右侧聊天区域 -->
         <div class="chat-area">
             <div id="chat-display" class="chat-display">
-                </div>
+                <!-- 聊天消息会在这里动态添加 -->
+            </div>
             <div class="input-area-container">
                 <div class="input-area">
                     <div class="attachment-button">

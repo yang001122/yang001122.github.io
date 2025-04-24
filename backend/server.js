@@ -33,7 +33,7 @@ const openai = OPENAI_API_KEY ? new OpenAI({
 // 初始化DeepSeek客户端 (使用OpenAI兼容接口)
 const deepseek = DEEPSEEK_API_KEY ? new OpenAI({
   apiKey: DEEPSEEK_API_KEY,
-  baseURL: "https://api.deepseek.com/v1",
+  baseURL: "https://api.deepseek.com/v1", // DeepSeek API的基础URL
 }) : null;
 
 // 测试路由
@@ -46,11 +46,11 @@ app.get('/', (req, res) => {
   res.json({
     message: '后端服务正常运行！',
     availableModels: availableModels,
-    endpoints: ['/api/gpt', '/api/deepseek', '/api/gpt/stream', '/api/deepseek/stream']
+    endpoints: ['/api/gpt', '/api/deepseek']
   });
 });
 
-// 处理GPT请求（非流式）
+// 处理GPT请求
 app.post('/api/gpt', async (req, res) => {
   if (!openai) {
     return res.status(503).json({ error: "OpenAI API未配置，此功能不可用" });
@@ -85,7 +85,7 @@ app.post('/api/gpt', async (req, res) => {
   }
 });
 
-// 处理DeepSeek请求（非流式）
+// 处理DeepSeek请求
 app.post('/api/deepseek', async (req, res) => {
   if (!deepseek) {
     return res.status(503).json({ error: "DeepSeek API未配置，此功能不可用" });
@@ -96,8 +96,10 @@ app.post('/api/deepseek', async (req, res) => {
       return res.status(400).json({ error: "请求体中缺少 'prompt' 参数" });
     }
     
+    // 使用固定的deepseek-chat模型
     const modelName = 'deepseek-chat';
-    console.log(`使用DeepSeek模型: ${modelName}`);
+    
+    console.log(`使用DeepSeek模型: ${modelName}`); // 添加日志以便调试
     
     const completion = await deepseek.chat.completions.create({
       model: modelName,
@@ -119,80 +121,6 @@ app.post('/api/deepseek', async (req, res) => {
       error: "调用 DeepSeek API 时出错",
       details: error.message || "未知错误"
     });
-  }
-});
-
-// 处理GPT流式请求
-app.get('/api/gpt/stream', async (req, res) => {
-  if (!openai) {
-    return res.status(503).json({ error: "OpenAI API未配置，此功能不可用" });
-  }
-
-  const prompt = req.query.prompt;
-  if (!prompt) {
-    return res.status(400).json({ error: "查询参数中缺少 'prompt'" });
-  }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-
-  try {
-    const stream = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0].delta.content) {
-        const content = chunk.choices[0].delta.content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-      }
-    }
-    res.write('data: [DONE]\n\n');
-  } catch (error) {
-    console.error('调用 OpenAI 流式 API 时出错:', error);
-    res.write(`data: ${JSON.stringify({ error: "调用 OpenAI 流式 API 时出错", details: error.message || "未知错误" })}\n\n`);
-  } finally {
-    res.end();
-  }
-});
-
-// 处理DeepSeek流式请求
-app.get('/api/deepseek/stream', async (req, res) => {
-  if (!deepseek) {
-    return res.status(503).json({ error: "DeepSeek API未配置，此功能不可用" });
-  }
-
-  const prompt = req.query.prompt;
-  if (!prompt) {
-    return res.status(400).json({ error: "查询参数中缺少 'prompt'" });
-  }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-
-  try {
-    const stream = await deepseek.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [{ role: "user", content: prompt }],
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      if (chunk.choices && chunk.choices.length > 0 && chunk.choices[0].delta.content) {
-        const content = chunk.choices[0].delta.content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
-      }
-    }
-    res.write('data: [DONE]\n\n');
-  } catch (error) {
-    console.error('调用 DeepSeek 流式 API 时出错:', error);
-    res.write(`data: ${JSON.stringify({ error: "调用 DeepSeek 流式 API 时出错", details: error.message || "未知错误" })}\n\n`);
-  } finally {
-    res.end();
   }
 });
 

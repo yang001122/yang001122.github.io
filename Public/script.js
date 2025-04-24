@@ -156,13 +156,13 @@ async function handleSubmit() {
   modelLabelDiv.textContent = `使用模型: ${modelLabel}`;
   chatDisplay.appendChild(modelLabelDiv);
   
+  const result = await callModelAPI(prompt);
   chatDisplay.removeChild(loadingMessage);
   
   const aiMessageDiv = document.createElement('div');
   aiMessageDiv.classList.add('ai-message');
+  aiMessageDiv.textContent = `${result}`;
   chatDisplay.appendChild(aiMessageDiv);
-  
-  const result = await callModelStreamAPI(prompt, aiMessageDiv);
   
   chatDisplay.scrollTop = chatDisplay.scrollHeight;
   
@@ -185,38 +185,51 @@ function displayInitialWelcome() {
   chatDisplay.appendChild(welcomeMessage);
 }
 
-// 调用后端流式API
-function callModelStreamAPI(prompt, aiMessageDiv) {
-  return new Promise((resolve, reject) => {
-    const selectedModel = getSelectedModel();
-    const url = `${BACKEND_URL}/api/${selectedModel}/stream?prompt=${encodeURIComponent(prompt)}`;
-    let fullResponse = '';
-
-    const eventSource = new EventSource(url);
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.content) {
-        fullResponse += data.content;
-        aiMessageDiv.textContent = fullResponse;
-        aiMessageDiv.scrollIntoView({ behavior: 'smooth' });
-      } else if (data === '[DONE]') {
-        eventSource.close();
-        resolve(fullResponse);
-      } else if (data.error) {
-        aiMessageDiv.textContent = `错误：${data.error} - ${data.details}`;
-        eventSource.close();
-        reject(new Error(data.error));
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('流式API错误:', error);
-      aiMessageDiv.textContent = '错误：无法获取流式响应';
-      eventSource.close();
-      reject(new Error('无法获取流式响应'));
-    };
-  });
+// 调用后端API与不同模型交互
+async function callModelAPI(prompt) {
+  const selectedModel = getSelectedModel();
+  
+  try {
+    // 设置请求超时
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+    
+    // 根据选择的模型确定API端点
+    let url = `${BACKEND_URL}/api/${selectedModel}`;
+    let requestBody = { prompt: prompt };
+    
+    // 如果是DeepSeek模型，设置固定为deepseek-chat
+    if (selectedModel === 'deepseek') {
+      requestBody.model = 'deepseek-chat';
+    }
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
+    });
+    
+    // 清除超时
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(`后端错误: ${response.status} - ${errorData.error || errorData.message}`);
+    }
+    
+    const data = await response.json();
+    
+    // 适配不同后端返回的格式
+    if (data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
+      return data.choices[0].message.content;
+    } else {
+      throw new Error(`无效的响应格式: ${JSON.stringify(data)}`);
+    }
+  } catch (error) {
+    console.error('错误:', error);
+    return `错误：无法获取模型响应 - ${error.message}`;
+  }
 }
 
 // 将消息添加到历史记录
@@ -309,6 +322,7 @@ function updateModelLabel() {
     document.body.appendChild(label);
   }
 }
+
 // 页面加载时
 document.addEventListener('DOMContentLoaded', () => {
   displayInitialWelcome();
