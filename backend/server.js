@@ -1,4 +1,5 @@
 //代码内容：server.js
+const mammoth = require('mammoth');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -23,7 +24,12 @@ const storage = multer.diskStorage({
     // 创建唯一文件名并保留原始扩展名
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const extension = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + extension);
+    
+    // 使用Buffer对原始文件名进行解码
+    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_'); // 移除非法字符
+    
+    cb(null, sanitizedName + '-' + uniqueSuffix + extension);
   }
 });
 
@@ -192,15 +198,27 @@ app.post('/api/analyze-file', async (req, res) => {
       ];
     } else {
       // 对于其他文件类型，尝试提取文本内容
-      let fileContent = '';
+let fileContent = '';
       
-      // 简单处理文本文件
-      if (['.txt', '.json', '.csv', '.md'].includes(fileExtension)) {
-        fileContent = fileBuffer.toString('utf8');
-      } else {
-        // 对于PDF、Word和Excel等文件，告知用户我们目前只能做简单处理
-        fileContent = `[此文件是${fileExtension}格式，已上传但仅能进行简单分析。请根据文件类型询问具体问题]`;
-      }
+// 简单处理文本文件
+if (['.txt', '.json', '.csv', '.md'].includes(fileExtension)) {
+  fileContent = fileBuffer.toString('utf8');
+} else if (['.docx', '.doc'].includes(fileExtension)) {
+  try {
+    // 使用mammoth提取Word文档内容
+    const result = await mammoth.extractRawText({buffer: fileBuffer});
+    fileContent = result.value; // 提取的文本内容
+    if (result.messages.length > 0) {
+      console.log('Word文档提取警告:', result.messages);
+    }
+  } catch (wordError) {
+    console.error('Word文档解析错误:', wordError);
+    fileContent = `[无法解析此Word文档: ${wordError.message}]`;
+  }
+} else {
+  // 对于PDF、Excel等文件，告知用户我们目前只能做简单处理
+  fileContent = `[此文件是${fileExtension}格式，已上传但仅能进行简单分析。请根据文件类型询问具体问题]`;
+}
       
       // 为其他类型文件创建消息
       messages = [
