@@ -333,16 +333,16 @@ body {
 .initial-welcome {
    text-align: center;
    padding: 40px;
-   color: #8e8ea0; /* Default color */
+   color: #8e8ea0; /* Default color - this will be hidden by the gradient */
    font-size: 36px; /* Adjusted font size */
    font-weight: bold; /* Added bold font weight */
    margin: auto; /* Auto margins for centering within flex container */
-   /* Gradient text effect */
-   background: linear-gradient to right, #6a5acd, #ff69b4); /* Example gradient colors (purple to pink) */
+   /* Gradient text effect: Red to Purple */
+   background: linear-gradient(to right, #ff0000, #8e44ad); /* Changed gradient colors */
    -webkit-background-clip: text;
    -webkit-text-fill-color: transparent;
    background-clip: text;
-   color: transparent; /* Fallback for non-webkit browsers */
+   color: transparent; /* Ensure text color is transparent for gradient to show */
    max-width: 80%; /* Limit width to keep text centered on wider screens */
    width: 100%; /* Allow it to take full width up to max-width */
 }
