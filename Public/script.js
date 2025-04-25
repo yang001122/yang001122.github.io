@@ -178,23 +178,21 @@ async function handleFileUpload(event) {
     // 存储上传的文件信息
     uploadedFile = result.file;
     
-    // 显示文件名时确保正确编码
-    const displayFileName = decodeURIComponent(escape(file.name));
-    
     // 更新输入框提示
-    userInput.placeholder = `文件 "${displayFileName}" 已上传，请输入问题或直接发送以分析文件`;
+    userInput.placeholder = `文件 "${file.name}" 已上传，请输入问题或直接发送以分析文件`;
     userInput.disabled = false;
     
     // 可选：自动在输入框中添加关于文件的提示文本
-    userInput.value = `请分析我上传的文件: ${displayFileName}`;
+    userInput.value = `请分析我上传的文件: ${file.name}`;
     
     // 通知用户
     const chatDisplay = document.getElementById('chat-display');
     const fileNotification = document.createElement('div');
     fileNotification.classList.add('system-message');
-    fileNotification.textContent = `文件 "${displayFileName}" 已成功上传，可以发送问题来分析此文件。`;
+    fileNotification.textContent = `文件 "${file.name}" 已成功上传，可以发送问题来分析此文件。`;
     chatDisplay.appendChild(fileNotification);
     chatDisplay.scrollTop = chatDisplay.scrollHeight;
+
   } catch (error) {
     console.error('文件上传错误:', error);
     alert(`文件上传失败: ${error.message}`);
