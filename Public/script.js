@@ -3,6 +3,7 @@ const BACKEND_URL = 'http://165.232.161.255:3000'; // 后端URL
 const CORRECT_PASSWORD = '20191130'; // 正确的密码
 
 let abortController = null; // Global variable to hold AbortController
+let uploadedFile = null; // 全局变量存储已上传的文件信息
 
 // 页面加载时
 document.addEventListener('DOMContentLoaded', () => {
@@ -87,6 +88,10 @@ function initializeApp() {
         abortController.abort(); // Abort any ongoing request
         abortController = null;
     }
+    // 重置已上传的文件
+    uploadedFile = null;
+    // 重置文件输入
+    document.getElementById('fileInput').value = '';
   });
 
   // 绑定历史记录搜索
@@ -105,12 +110,7 @@ function initializeApp() {
   });
 
   // 处理文件输入
-  document.getElementById('fileInput').addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      alert(`文件选中: ${file.name}. 文件上传功能需要后端支持。`);
-    }
-  });
+  document.getElementById('fileInput').addEventListener('change', handleFileUpload);
 
   // 检查可用模型并更新选择器
   fetch(`${BACKEND_URL}/`)
@@ -147,10 +147,67 @@ function initializeApp() {
    document.getElementById('modelSelect').addEventListener('change', updateModelLabel);
 }
 
+// 处理文件上传
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // 创建一个FormData对象，用于发送文件
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    // 显示上传中状态
+    const userInput = document.getElementById('userInput');
+    const originalPlaceholder = userInput.placeholder;
+    userInput.placeholder = `正在上传文件: ${file.name}...`;
+    userInput.disabled = true;
+
+    // 发送文件到服务器
+    const response = await fetch(`${BACKEND_URL}/api/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`文件上传失败: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    
+    // 存储上传的文件信息
+    uploadedFile = result.file;
+    
+    // 更新输入框提示
+    userInput.placeholder = `文件 "${file.name}" 已上传，请输入问题或直接发送以分析文件`;
+    userInput.disabled = false;
+    
+    // 可选：自动在输入框中添加关于文件的提示文本
+    userInput.value = `请分析我上传的文件: ${file.name}`;
+    
+    // 通知用户
+    const chatDisplay = document.getElementById('chat-display');
+    const fileNotification = document.createElement('div');
+    fileNotification.classList.add('system-message');
+    fileNotification.textContent = `文件 "${file.name}" 已成功上传，可以发送问题来分析此文件。`;
+    chatDisplay.appendChild(fileNotification);
+    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+
+  } catch (error) {
+    console.error('文件上传错误:', error);
+    alert(`文件上传失败: ${error.message}`);
+    
+    // 重置文件输入和状态
+    document.getElementById('fileInput').value = '';
+    document.getElementById('userInput').placeholder = originalPlaceholder;
+    document.getElementById('userInput').disabled = false;
+  }
+}
+
 // 处理用户输入并提交
 async function handleSubmit() {
   const prompt = document.getElementById('userInput').value.trim();
-  if (!prompt) {
+  if (!prompt && !uploadedFile) {
     return;
   }
 
@@ -162,7 +219,7 @@ async function handleSubmit() {
 
   const userMessageDiv = document.createElement('div');
   userMessageDiv.classList.add('user-message');
-  userMessageDiv.textContent = `${prompt}`;
+  userMessageDiv.textContent = prompt || `请分析文件: ${uploadedFile.originalName}`;
   chatDisplay.appendChild(userMessageDiv);
 
   // 创建AI消息容器，用于逐步填充内容
@@ -195,8 +252,19 @@ async function handleSubmit() {
   abortController = new AbortController();
   const signal = abortController.signal;
 
-  // 调用流式API并处理Markdown渲染
-  const fullResponse = await callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal); // Pass signal
+  let fullResponse;
+  
+  // 判断是处理普通提问还是文件分析
+  if (uploadedFile) {
+    // 调用文件分析API
+    fullResponse = await analyzeUploadedFile(prompt, uploadedFile, aiMessageDiv, loadingIndicator, signal);
+    // 分析完成后重置文件状态
+    uploadedFile = null;
+    document.getElementById('fileInput').value = '';
+  } else {
+    // 普通对话处理
+    fullResponse = await callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal);
+  }
 
   chatDisplay.scrollTop = chatDisplay.scrollHeight;
 
@@ -205,10 +273,9 @@ async function handleSubmit() {
   document.getElementById('submitButton').style.display = 'inline-block';
   abortController = null;
 
-
   // Update history only if the response was not aborted
   if (fullResponse && !signal.aborted) {
-      updateHistory(prompt, fullResponse);
+      updateHistory(userMessageDiv.textContent, fullResponse);
   } else if (signal.aborted) {
        console.log("Request was aborted. Not updating history.");
        // Optionally update the AI message div to indicate it was stopped
@@ -219,7 +286,131 @@ async function handleSubmit() {
        }
   } else {
       // If there was an error and not aborted
-      updateHistory(prompt, "响应出错或为空");
+      updateHistory(userMessageDiv.textContent, "响应出错或为空");
+  }
+}
+
+// 分析上传的文件
+async function analyzeUploadedFile(prompt, fileInfo, aiMessageDiv, loadingIndicator, signal) {
+  let fullResponseContent = ''; // 用于存储完整的AI响应
+  
+  try {
+    const selectedModel = getSelectedModel();
+    
+    // 准备请求体
+    const requestBody = {
+      fileUrl: fileInfo.url,
+      model: selectedModel,
+      prompt: prompt || `请分析这个${fileInfo.mimetype.split('/')[1]}文件的内容`
+    };
+    
+    // 调用后端API进行文件分析
+    const response = await fetch(`${BACKEND_URL}/api/analyze-file`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+      signal: signal
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '未知错误');
+      throw new Error(`文件分析错误: ${response.status} - ${errorText}`);
+    }
+    
+    // 移除加载指示器
+    if (loadingIndicator && loadingIndicator.parentNode) {
+      loadingIndicator.parentNode.removeChild(loadingIndicator);
+    }
+    
+    // 处理流式响应
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let done = false;
+    let accumulatedText = '';
+    
+    while (!done) {
+      const { value, done: readerDone } = await reader.read();
+      done = readerDone;
+      const chunk = decoder.decode(value, { stream: true });
+      
+      // 检查是否中止请求
+      if (signal.aborted) {
+        console.log("文件分析被中止");
+        break;
+      }
+      
+      // 处理接收到的数据块 (SSE 格式)
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.substring(6);
+          if (data === '[DONE]') {
+            done = true;
+            break;
+          }
+          try {
+            const json = JSON.parse(data);
+            if (json.content) {
+              // 累积接收到的文本
+              accumulatedText += json.content;
+              fullResponseContent += json.content; // 也累加用于历史记录
+              
+              // 解析Markdown并清理HTML
+              const html = marked.parse(accumulatedText);
+              const sanitizedHtml = DOMPurify.sanitize(html);
+              
+              // 更新AI消息容器的innerHTML
+              aiMessageDiv.innerHTML = sanitizedHtml;
+              
+              // 如果用户没有向上滚动，则自动滚动到底部
+              const chatDisplay = document.getElementById('chat-display');
+              const isAtBottom = chatDisplay.scrollHeight - chatDisplay.clientHeight <= chatDisplay.scrollTop + 1;
+              if (isAtBottom) {
+                chatDisplay.scrollTop = chatDisplay.scrollHeight;
+              }
+            } else if (json.error) {
+              // 显示后端返回的错误信息
+              aiMessageDiv.textContent = `错误：${json.details || json.error}`;
+              fullResponseContent = aiMessageDiv.textContent; // 将错误信息作为完整响应
+              done = true; // 遇到错误也停止
+              break;
+            }
+          } catch (e) {
+            console.error("解析数据块失败:", e, "数据:", data);
+          }
+        }
+        
+        // 检查每行处理后是否中止
+        if (signal.aborted) {
+          console.log("处理数据行被中止");
+          done = true;
+          break;
+        }
+      }
+    }
+    
+    return fullResponseContent;
+    
+  } catch (error) {
+    console.error('文件分析错误:', error);
+    
+    // 移除加载指示器
+    if (loadingIndicator && loadingIndicator.parentNode) {
+      loadingIndicator.parentNode.removeChild(loadingIndicator);
+    }
+    
+    // 处理中止错误
+    if (error.name === 'AbortError') {
+      console.log('文件分析被用户中止');
+      if (aiMessageDiv && !aiMessageDiv.textContent.includes("已停止")) {
+        aiMessageDiv.innerHTML += '<br>对话已停止。';
+      }
+      return null;
+    } else {
+      // 处理其他错误
+      aiMessageDiv.textContent = `错误：文件分析失败 - ${error.message}`;
+      return aiMessageDiv.textContent;
+    }
   }
 }
 
@@ -520,7 +711,6 @@ function updateModelLabel() {
   existingLabel.textContent = `当前模型: ${modelLabel}`;
 }
 
-
 // 搜索历史记录
 document.getElementById('searchInput').addEventListener('input', function () {
   const searchTerm = this.value.toLowerCase();
@@ -536,39 +726,11 @@ document.getElementById('searchInput').addEventListener('input', function () {
   });
 });
 
-// 处理文件输入
-document.getElementById('fileInput').addEventListener('change', (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    alert(`文件选中: ${file.name}. 文件上传功能需要后端支持。`);
-  }
-});
+// 处理文件输入已经移到initializeApp函数中
 
-// 新建对话按钮功能
-document.getElementById('newChatButton').addEventListener('click', () => {
-  document.getElementById('userInput').value = '';
-  document.getElementById('chat-display').innerHTML = '';
-  displayInitialWelcome();
-   // Also reset stop button state on new chat
-    document.getElementById('stopButton').style.display = 'none';
-    document.getElementById('submitButton').style.display = 'inline-block';
-    if (abortController) { // Abort any ongoing request
-        abortController.abort();
-        abortController = null;
-    }
-});
+// 新建对话按钮功能已经移到initializeApp函数中
 
 // 按下 Enter 键发送消息
 document.getElementById('userInput').addEventListener('keydown', function(event) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
-    // Check if a request is already in progress before submitting
-    if (!abortController) {
-        document.getElementById('submitButton').click();
-    }
-  }
-});
-
-// 监听模型选择器的变化 (确保在 initializeApp 后绑定)
-// 这里的监听器是多余的，因为已经在 initializeApp 中绑定了，可以删除这个重复的
-// document.getElementById('modelSelect').addEventListener('change', updateModelLabel);

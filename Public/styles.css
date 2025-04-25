@@ -266,6 +266,8 @@ body {
    background-color: #1a1a1a; /* 修改为更深的黑色 */
    border-radius: 6px;
    padding: 8px 12px;
+   position: relative; /* 添加相对定位 */
+   flex-wrap: wrap; /* 允许内容换行 */
 }
 
 .input-area input[type="text"] {
@@ -276,6 +278,7 @@ body {
    padding: 8px;
    font-size: 16px;
    outline: none;
+   min-width: 100px; /* 防止输入框被挤压得过小 */
 }
 
 .attachment-button, .send-button, .stop-button {
@@ -299,6 +302,145 @@ body {
 
 .stop-button:hover {
     color: #ff8888;
+}
+
+/* 新增文件预览区域样式 */
+.file-preview {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px;
+   margin: 6px 0;
+   width: 100%;
+   max-height: 80px;
+   overflow-y: auto;
+}
+
+.file-item {
+   display: flex;
+   align-items: center;
+   background: #343541;
+   border-radius: 4px;
+   padding: 4px 8px;
+   margin: 2px;
+   max-width: calc(50% - 4px);
+}
+
+.file-icon {
+   margin-right: 6px;
+   color: #8e8ea0;
+}
+
+.file-name {
+   flex: 1;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   font-size: 12px;
+}
+
+.file-remove {
+   cursor: pointer;
+   margin-left: 6px;
+   color: #8e8ea0;
+}
+
+.file-remove:hover {
+   color: #ff5555;
+}
+
+/* 上传覆盖层和进度条 */
+.upload-overlay {
+   position: fixed;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   background-color: rgba(0, 0, 0, 0.8);
+   display: none;
+   justify-content: center;
+   align-items: center;
+   z-index: 1000;
+}
+
+.upload-progress-container {
+   background-color: #1a1a1a;
+   border-radius: 8px;
+   padding: 20px;
+   width: 80%;
+   max-width: 400px;
+}
+
+.upload-progress-title {
+   text-align: center;
+   margin-bottom: 15px;
+   font-size: 18px;
+}
+
+.progress-bar-container {
+   height: 10px;
+   background-color: #343541;
+   border-radius: 5px;
+   overflow: hidden;
+   margin-bottom: 10px;
+}
+
+.progress-bar {
+   height: 100%;
+   background-color: #55a5ff;
+   width: 0%;
+   transition: width 0.3s ease;
+}
+
+.upload-status {
+   text-align: center;
+   color: #8e8ea0;
+   font-size: 14px;
+}
+
+/* 图片附件预览样式 */
+.image-preview {
+   max-width: 100%;
+   max-height: 150px;
+   border-radius: 4px;
+   margin-top: 4px;
+   cursor: pointer;
+   transition: transform 0.2s;
+}
+
+.image-preview:hover {
+   transform: scale(1.05);
+}
+
+/* 上传的文件在聊天区域的显示样式 */
+.file-attachment {
+   display: flex;
+   align-items: center;
+   background: #2a2a2a;
+   border-radius: 6px;
+   padding: 10px;
+   margin: 8px 0;
+   width: fit-content;
+   max-width: 100%;
+}
+
+.file-attachment-icon {
+   font-size: 20px;
+   margin-right: 10px;
+   color: #55a5ff;
+}
+
+.file-attachment-content {
+   flex: 1;
+}
+
+.file-attachment-name {
+   font-weight: bold;
+   margin-bottom: 4px;
+}
+
+.file-attachment-info {
+   font-size: 12px;
+   color: #8e8ea0;
 }
 
 /* 聊天消息样式 */
@@ -488,5 +630,15 @@ body {
        position: static; /* 在小屏幕上恢复静态定位 */
        margin-bottom: 10px; /* 添加底部外边距 */
        text-align: center;
+   }
+   
+   /* 响应式文件预览 */
+   .file-item {
+       max-width: 100%;
+   }
+   
+   /* 调整上传进度容器大小 */
+   .upload-progress-container {
+       width: 95%;
    }
 }
