@@ -309,9 +309,10 @@ body {
 
 /* 聊天消息样式 */
 .user-message, .ai-message {
-   padding: 16px;
+   /* Adjusted padding based on new reference */
+   padding: 12px; /* Reduced internal padding */
    /* Adjusted margin-bottom for reduced spacing */
-   margin-bottom: 10px; /* Reduced margin bottom */
+   margin-bottom: 10px; /* Message block bottom margin */
    border-radius: 6px;
    line-height: 1.6; /* Slightly reduced line height */
    word-wrap: break-word; /* 防止长单词或URL溢出 */
