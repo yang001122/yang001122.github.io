@@ -378,17 +378,17 @@ body {
 }
 
 
-/* Markdown 渲染元素的样式调整 */
+/* Markdown 渲染元素的样式调整 - 修改了间距 */
 .ai-message p {
-    margin-top: 0.5em; /* 段落上边距，减小 */
-    margin-bottom: 0.5em; /* 段落下边距，减小 */
+    margin-top: 1em; /* 增加段落上边距 */
+    margin-bottom: 1em; /* 增加段落下边距 */
 }
 
 .ai-message ul,
 .ai-message ol {
-    margin-top: 0.5em; /* 列表上边距，减小 */
-    margin-bottom: 0.5em; /* 列表下边距，减小 */
-    padding-left: 20px; /* 列表左边距 */
+    margin-top: 1em; /* 增加列表上边距 */
+    margin-bottom: 1em; /* 增加列表下边距 */
+    padding-left: 25px; /* 增加列表左边距 */
     list-style-type: disc; /* 或者 square; circle; for ul */
 }
 
@@ -397,17 +397,17 @@ body {
 }
 
 .ai-message li {
-    margin-bottom: 0.3em; /* 列表项下边距，减小 */
+    margin-bottom: 0.7em; /* 增加列表项下边距 */
 }
 
 .ai-message pre {
     background-color: #2d2d2d; /* 代码块背景色 */
     color: #cccccc; /* 代码颜色 */
-    padding: 12px; /* 代码块内边距，减小 */
+    padding: 12px; /* 代码块内边距 */
     border-radius: 6px;
     overflow-x: auto;
-    margin-top: 0.8em; /* 代码块上边距，减小 */
-    margin-bottom: 0.8em; /* 代码块下边距，减小 */
+    margin-top: 1.2em; /* 增加代码块上边距 */
+    margin-bottom: 1.2em; /* 增加代码块下边距 */
     white-space: pre-wrap;
     word-wrap: break-word;
 }
@@ -426,8 +426,8 @@ body {
 }
 
 .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4, .ai-message h5, .ai-message h6 {
-    margin-top: 1.2em; /* 标题上边距，减小 */
-    margin-bottom: 0.8em; /* 标题下边距，减小 */
+    margin-top: 1.5em; /* 增加标题上边距 */
+    margin-bottom: 1em; /* 增加标题下边距 */
     color: #fff;
 }
 
@@ -444,14 +444,14 @@ body {
     margin-left: 0;
     font-style: italic;
     color: #8e8ea0;
-    margin-top: 0.8em; /* 引用块上边距，减小 */
-    margin-bottom: 0.8em; /* 引用块下边距，减小 */
+    margin-top: 1em; /* 增加引用块上边距 */
+    margin-bottom: 1em; /* 增加引用块下边距 */
 }
 
 .ai-message table {
     border-collapse: collapse;
-    margin-top: 0.8em; /* 表格上边距，减小 */
-    margin-bottom: 0.8em; /* 表格下边距，减小 */
+    margin-top: 1em; /* 增加表格上边距 */
+    margin-bottom: 1em; /* 增加表格下边距 */
     width: 100%;
 }
 
