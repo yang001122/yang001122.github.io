@@ -10,6 +10,8 @@ const app = express();
 
 // 引入 mammoth 库用于解析 .docx 文件
 const mammoth = require('mammoth');
+// 引入 pdf-parse 库用于解析 .pdf 文件
+const pdfParse = require('pdf-parse');
 
 // 确保上传目录存在
 const uploadDir = path.join(__dirname, '../uploads');
@@ -204,12 +206,23 @@ app.post('/api/analyze-file', async (req, res) => {
             console.error('解析 Docx 文件失败:', error);
             fileContentForAI = `[无法解析 Docx 文件内容: ${error.message}]`;
         }
-    } else if (['.txt', '.json', '.csv', '.md'].includes(fileExtension)) {
+    } else if (fileExtension === '.pdf') {
+        // 处理 .pdf 文件
+        try {
+            const data = await pdfParse(fileBuffer);
+            fileContentForAI = data.text; // 提取 PDF 文本内容
+             console.log("PDF 文件提取的文本长度:", fileContentForAI.length); // 添加日志
+        } catch (error) {
+            console.error('解析 PDF 文件失败:', error);
+            fileContentForAI = `[无法解析 PDF 文件内容: ${error.message}]`;
+        }
+    }
+     else if (['.txt', '.json', '.csv', '.md'].includes(fileExtension)) {
       // 简单处理文本文件
       fileContentForAI = fileBuffer.toString('utf8');
        console.log("文本文件提取的文本长度:", fileContentForAI.length); // 添加日志
     } else {
-      // 对于其他不支持直接文本提取的文件类型 (如 PDF, XLSX, DOC)
+      // 对于其他不支持直接文本提取的文件类型 (如 DOC, XLSX, XLS)
       // 您可以在这里添加其他文件类型的解析逻辑，或保留简单的提示
       fileContentForAI = `[此文件是 ${fileExtension} 格式，已上传但当前后端不支持对其内容进行深度解析。请根据文件类型询问简单问题或等待后续功能更新。]`;
        console.log("不支持直接解析的文件类型:", fileExtension); // 添加日志

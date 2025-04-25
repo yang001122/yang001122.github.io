@@ -58,22 +58,20 @@ function handleLogin() {
 // 初始化主应用
 function initializeApp() {
   // 全局变量来存储当前的DeepSeek模型，更新为正确的模型名称
-  // 这一行可以删除，模型选择器已经处理了模型的选择
-  // window.currentDeepSeekModel = 'deepseek-chat';
+  window.currentDeepSeekModel = 'deepseek-chat';
 
   displayInitialWelcome();
 
   // 绑定提交按钮事件
   document.getElementById('submitButton').addEventListener('click', handleSubmit);
 
-  // !!! 注意：删除了这里重复的输入框Enter键事件监听器 !!!
-  // document.getElementById('userInput').addEventListener('keydown', function(event) {
-  //   if (event.key === 'Enter' && !event.shiftKey) {
-  //     event.preventDefault();
-  //     handleSubmit();
-  //   }
-  // });
-
+  // 绑定输入框Enter键事件
+  document.getElementById('userInput').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit();
+    }
+  });
 
   // 绑定停止按钮事件
   document.getElementById('stopButton').addEventListener('click', handleStop);
@@ -94,11 +92,9 @@ function initializeApp() {
     uploadedFile = null;
     // 重置文件输入
     document.getElementById('fileInput').value = '';
-     // 清除可能显示的文件提示文本
-     document.getElementById('userInput').placeholder = "问我任何问题...";
   });
 
-  // 绑定历史记录搜索 (此部分保留，与提交逻辑不冲突)
+  // 绑定历史记录搜索
   document.getElementById('searchInput').addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase();
     const historyItems = document.querySelectorAll('#history-display .history-item');
@@ -149,17 +145,6 @@ function initializeApp() {
 
    // 监听模型选择器的变化
    document.getElementById('modelSelect').addEventListener('change', updateModelLabel);
-
-   // 保留文件末尾的输入框 Enter 键监听器，因为它包含了 abortController 检查
-   document.getElementById('userInput').addEventListener('keydown', function(event) {
-        if (event.key === 'Enter' && !event.shiftKey) {
-          event.preventDefault();
-           // Check if a request is already in progress before submitting
-           if (!abortController) {
-            document.getElementById('submitButton').click(); // 模拟点击提交按钮
-        }
-      }
-    });
 }
 
 // 处理文件上传
@@ -198,8 +183,7 @@ async function handleFileUpload(event) {
     userInput.disabled = false;
 
     // 可选：自动在输入框中添加关于文件的提示文本
-    // 这里的自动填充可能会干扰用户输入，也可以选择不自动填充
-    // userInput.value = `请分析我上传的文件: ${file.name}`; // 移除或注释此行以避免自动填充
+    userInput.value = `请分析我上传的文件: ${file.name}`;
 
     // 通知用户
     const chatDisplay = document.getElementById('chat-display');
@@ -223,18 +207,9 @@ async function handleFileUpload(event) {
 // 处理用户输入并提交
 async function handleSubmit() {
   const prompt = document.getElementById('userInput').value.trim();
-   // 如果没有输入框内容且没有上传文件，则不提交
   if (!prompt && !uploadedFile) {
-    // 如果有上传文件但输入框为空，可以设置一个默认提示
-    if (uploadedFile) {
-         document.getElementById('userInput').value = `请分析我上传的文件: ${uploadedFile.originalName}`;
-         // 然后再次尝试提交，或者直接return等待用户输入或发送
-         // 为了避免二次提交问题，这里直接return等待用户操作
-         return;
-    }
-     return; // 没有内容也没有文件，直接返回
+    return;
   }
-
 
   const chatDisplay = document.getElementById('chat-display');
   const initialWelcome = chatDisplay.querySelector('.initial-welcome');
@@ -244,8 +219,7 @@ async function handleSubmit() {
 
   const userMessageDiv = document.createElement('div');
   userMessageDiv.classList.add('user-message');
-   // 如果输入框为空但有上传文件，使用默认提示作为用户消息
-  userMessageDiv.textContent = prompt || `请分析文件: ${uploadedFile ? uploadedFile.originalName : '未指定文件'}`;
+  userMessageDiv.textContent = prompt || `请分析文件: ${uploadedFile.originalName}`;
   chatDisplay.appendChild(userMessageDiv);
 
   // 创建AI消息容器，用于逐步填充内容
@@ -275,7 +249,6 @@ async function handleSubmit() {
   document.getElementById('stopButton').style.display = 'inline-block';
 
   // Initialize AbortController
-  // 每次新的提交都创建一个新的 AbortController
   abortController = new AbortController();
   const signal = abortController.signal;
 
@@ -287,8 +260,7 @@ async function handleSubmit() {
     fullResponse = await analyzeUploadedFile(prompt, uploadedFile, aiMessageDiv, loadingIndicator, signal);
     // 分析完成后重置文件状态
     uploadedFile = null;
-    document.getElementById('fileInput').value = ''; // 重置文件输入框，允许再次选择同一文件
-    document.getElementById('userInput').placeholder = "问我任何问题..."; // 恢复默认提示
+    document.getElementById('fileInput').value = '';
   } else {
     // 普通对话处理
     fullResponse = await callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal);
@@ -299,28 +271,22 @@ async function handleSubmit() {
   // Reset button states and abortController
   document.getElementById('stopButton').style.display = 'none';
   document.getElementById('submitButton').style.display = 'inline-block';
-  abortController = null; // 请求结束或中止后，清空 AbortController
+  abortController = null;
 
-  // Update history only if the response was not aborted or empty
-  if (fullResponse && typeof fullResponse === 'string' && fullResponse.trim() !== '') {
-       updateHistory(userMessageDiv.textContent, fullResponse);
+  // Update history only if the response was not aborted
+  if (fullResponse && !signal.aborted) {
+      updateHistory(userMessageDiv.textContent, fullResponse);
   } else if (signal.aborted) {
        console.log("Request was aborted. Not updating history.");
        // Optionally update the AI message div to indicate it was stopped
        if (aiMessageDiv && !aiMessageDiv.textContent.includes("已停止")) {
-            // 如果消息容器已经被流式内容填充，可以在末尾添加提示
-            if (aiMessageDiv.innerHTML.trim() !== '' && aiMessageDiv.innerHTML.trim() !== '<span class="loading-indicator">思考中...</span>') {
-                 aiMessageDiv.innerHTML += '<br>对话已停止。';
-            } else {
-                 // 如果没有流式内容（例如刚显示加载中就被停止），直接显示停止
-                 aiMessageDiv.textContent = '对话已停止。';
-            }
+            aiMessageDiv.innerHTML += '<br>对话已停止。';
+            // Update the fullResponseContent to reflect the stop for history or not add to history at all
+            // For now, let's not add aborted conversations to history
        }
-       // 返回 null 或特殊标记，表示不添加到历史记录
-       return null;
   } else {
-      // If there was an error and not aborted, update history with error
-      updateHistory(userMessageDiv.textContent, aiMessageDiv.textContent || "响应出错或为空");
+      // If there was an error and not aborted
+      updateHistory(userMessageDiv.textContent, "响应出错或为空");
   }
 }
 
@@ -346,24 +312,14 @@ async function analyzeUploadedFile(prompt, fileInfo, aiMessageDiv, loadingIndica
       signal: signal
     });
 
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '未知错误');
+      throw new Error(`文件分析错误: ${response.status} - ${errorText}`);
+    }
+
     // 移除加载指示器
     if (loadingIndicator && loadingIndicator.parentNode) {
       loadingIndicator.parentNode.removeChild(loadingIndicator);
-    }
-
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '未知错误');
-       // 尝试解析后端返回的错误JSON
-      let errorDetails = errorText;
-       try {
-           const errorJson = JSON.parse(errorText);
-           errorDetails = errorJson.details || errorJson.error || errorText;
-       } catch (e) {
-            // 解析失败，使用原始文本
-       }
-      aiMessageDiv.textContent = `错误：文件分析错误 - ${response.status} - ${errorDetails}`;
-      return aiMessageDiv.textContent; // 返回错误信息
     }
 
     // 处理流式响应
@@ -379,8 +335,8 @@ async function analyzeUploadedFile(prompt, fileInfo, aiMessageDiv, loadingIndica
 
       // 检查是否中止请求
       if (signal.aborted) {
-        console.log("文件分析流被中止");
-        break; // 退出循环
+        console.log("文件分析被中止");
+        break;
       }
 
       // 处理接收到的数据块 (SSE 格式)
@@ -390,7 +346,7 @@ async function analyzeUploadedFile(prompt, fileInfo, aiMessageDiv, loadingIndica
           const data = line.substring(6);
           if (data === '[DONE]') {
             done = true;
-            break; // 退出 inner loop
+            break;
           }
           try {
             const json = JSON.parse(data);
@@ -408,7 +364,7 @@ async function analyzeUploadedFile(prompt, fileInfo, aiMessageDiv, loadingIndica
 
               // 如果用户没有向上滚动，则自动滚动到底部
               const chatDisplay = document.getElementById('chat-display');
-              const isAtBottom = chatDisplay.scrollHeight - chatDisplay.clientHeight <= chatDisplay.scrollTop + 5; // Add a small buffer
+              const isAtBottom = chatDisplay.scrollHeight - chatDisplay.clientHeight <= chatDisplay.scrollTop + 1;
               if (isAtBottom) {
                 chatDisplay.scrollTop = chatDisplay.scrollHeight;
               }
@@ -417,38 +373,23 @@ async function analyzeUploadedFile(prompt, fileInfo, aiMessageDiv, loadingIndica
               aiMessageDiv.textContent = `错误：${json.details || json.error}`;
               fullResponseContent = aiMessageDiv.textContent; // 将错误信息作为完整响应
               done = true; // 遇到错误也停止
-              break; // 退出 inner loop
+              break;
             }
           } catch (e) {
             console.error("解析数据块失败:", e, "数据:", data);
-             // 如果解析数据块失败，可以在AI消息中显示一个提示
-             if (!aiMessageDiv.textContent.includes("数据解析错误")) {
-                  aiMessageDiv.innerHTML += '<br> [接收数据解析错误，内容可能不完整]';
-             }
           }
         }
 
         // 检查每行处理后是否中止
         if (signal.aborted) {
-          console.log("文件分析处理数据行被中止");
-          done = true; // Ensure loop terminates
-          break; // 退出 inner loop
+          console.log("处理数据行被中止");
+          done = true;
+          break;
         }
       }
-       // 检查 outer loop 是否中止
-       if (signal.aborted) {
-           console.log("文件分析 outer loop 被中止");
-           break;
-       }
-    }
-    // 如果循环因中止而结束，但不完全是 DONE 状态，可能需要额外处理
-    if (!done && signal.aborted) {
-         console.log("文件分析流因中止而终止");
-         return null; // 返回 null 表示被中止
     }
 
-
-    return fullResponseContent; // 返回完整的AI响应
+    return fullResponseContent;
 
   } catch (error) {
     console.error('文件分析错误:', error);
@@ -461,18 +402,14 @@ async function analyzeUploadedFile(prompt, fileInfo, aiMessageDiv, loadingIndica
     // 处理中止错误
     if (error.name === 'AbortError') {
       console.log('文件分析被用户中止');
-      // 如果消息容器已经被流式内容填充，可以在末尾添加提示
-       if (aiMessageDiv && aiMessageDiv.innerHTML.trim() !== '' && aiMessageDiv.innerHTML.trim() !== '<span class="loading-indicator">思考中...</span>') {
-           aiMessageDiv.innerHTML += '<br>对话已停止。';
-       } else {
-           // 如果没有流式内容（例如刚显示加载中就被停止），直接显示停止
-           aiMessageDiv.textContent = '对话已停止。';
-       }
-      return null; // 返回 null 表示被中止
+      if (aiMessageDiv && !aiMessageDiv.textContent.includes("已停止")) {
+        aiMessageDiv.innerHTML += '<br>对话已停止。';
+      }
+      return null;
     } else {
       // 处理其他错误
       aiMessageDiv.textContent = `错误：文件分析失败 - ${error.message}`;
-      return aiMessageDiv.textContent; // 返回错误信息作为完整响应
+      return aiMessageDiv.textContent;
     }
   }
 }
@@ -482,26 +419,17 @@ function handleStop() {
     if (abortController) {
         console.log("Aborting request...");
         abortController.abort();
-        // 在 abort 后，handleSubmit 中的 finally 块会清除 abortController = null;
-        // 这里不需要再次设置 abortController = null;
-        // abortController = null;
+        abortController = null;
 
-        // Update UI is handled in the fetch catch block when AbortError is caught
-        // However, we should reset buttons immediately on click
+        // Update UI
         document.getElementById('stopButton').style.display = 'none';
         document.getElementById('submitButton').style.display = 'inline-block';
-
 
         // Optional: Display a message in the chat indicating the stop
         const chatDisplay = document.getElementById('chat-display');
         const lastAiMessage = chatDisplay.querySelector('.ai-message:last-child');
         if (lastAiMessage && !lastAiMessage.textContent.includes("已停止")) {
-             // 检查消息容器是否有内容，避免在空消息框里添加“已停止”
-            if (lastAiMessage.innerHTML.trim() !== '' && lastAiMessage.innerHTML.trim() !== '<span class="loading-indicator">思考中...</span>') {
-                 lastAiMessage.innerHTML += '<br>对话已停止。';
-            } else {
-                 lastAiMessage.textContent = '对话已停止。';
-            }
+            lastAiMessage.innerHTML += '<br>对话已停止。';
         }
     }
 }
@@ -518,7 +446,24 @@ function displayInitialWelcome() {
   chatDisplay.innerHTML = '';
   const welcomeMessage = document.createElement('div');
   welcomeMessage.classList.add('ai-message', 'initial-welcome');
-  welcomeMessage.textContent = "有什么可以帮忙的?";
+
+  // 获取当前时间（北京时间）
+  const now = new Date();
+  // 获取UTC时间并加上北京时间的偏移量（+8小时 * 60分钟 * 60秒 * 1000毫秒）
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const beijingTime = new Date(utc + (8 * 3600000));
+  const hour = beijingTime.getHours();
+
+  let greeting;
+  if (hour >= 6 && hour < 12) {
+    greeting = "Hi,上午好";
+  } else if (hour >= 12 && hour < 18) {
+    greeting = "Hi,中午好";
+  } else {
+    greeting = "Hi,晚上好";
+  }
+
+  welcomeMessage.textContent = `${greeting}，有什么可以帮忙的？`; // Concatenate greeting with the rest of the message
   chatDisplay.appendChild(welcomeMessage);
 }
 
@@ -530,22 +475,21 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
 
   try {
     // Set timeout with AbortController
-    // Timeout handling is now within handleSubmit's AbortController
-    // const timeoutId = setTimeout(() => {
-    //     if (abortController) { // Check if abortController still exists
-    //         abortController.abort();
-    //         console.log("Request timed out.");
-    //     }
-    // }, 120000); // Extended timeout
+    const timeoutId = setTimeout(() => {
+        if (abortController) { // Check if abortController still exists
+            abortController.abort();
+            console.log("Request timed out.");
+        }
+    }, 120000); // Extended timeout
 
     // 根据选择的模型确定API端点
     let url = `${BACKEND_URL}/api/${selectedModel}`;
     let requestBody = { prompt: prompt };
 
-    // 如果是DeepSeek模型，设置固定为deepseek-chat (这部分已经在后端处理了，前端可以不传 modelName)
-    // if (selectedModel === 'deepseek') {
-    //   requestBody.model = 'deepseek-chat';
-    // }
+    // 如果是DeepSeek模型，设置固定为deepseek-chat
+    if (selectedModel === 'deepseek') {
+      requestBody.model = 'deepseek-chat';
+    }
 
     const response = await fetch(url, {
       method: 'POST',
@@ -555,26 +499,16 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
     });
 
     // Clear timeout if fetch is successful (or aborted)
-    // clearTimeout(timeoutId);
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '未知错误');
+      throw new Error(`后端错误: ${response.status} - ${errorText}`);
+    }
 
     // 移除加载指示器
     if (loadingIndicator && loadingIndicator.parentNode) {
         loadingIndicator.parentNode.removeChild(loadingIndicator);
-    }
-
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '未知错误');
-       // 尝试解析后端返回的错误JSON
-      let errorDetails = errorText;
-       try {
-           const errorJson = JSON.parse(errorText);
-           errorDetails = errorJson.details || errorJson.error || errorText;
-       } catch (e) {
-            // 解析失败，使用原始文本
-       }
-      aiMessageDiv.textContent = `错误：后端错误 - ${response.status} - ${errorDetails}`;
-      return aiMessageDiv.textContent; // 返回错误信息
     }
 
     // 处理流式响应
@@ -590,7 +524,7 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
       // Handle abort signal during reading
       if (signal.aborted) {
           console.log("Read stream aborted.");
-          break; // Exit loop
+          break;
       }
 
       // 处理接收到的数据块 (SSE 格式)
@@ -600,7 +534,7 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
               const data = line.substring(6);
               if (data === '[DONE]') {
                   done = true;
-                  break; // Exit inner loop
+                  break;
               }
               try {
                   const json = JSON.parse(data);
@@ -619,7 +553,7 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
 
                       // Keep scrolling to the bottom only if the user hasn't scrolled up
                        const chatDisplay = document.getElementById('chat-display');
-                       const isAtBottom = chatDisplay.scrollHeight - chatDisplay.clientHeight <= chatDisplay.scrollTop + 5; // Add a small buffer
+                       const isAtBottom = chatDisplay.scrollHeight - chatDisplay.clientHeight <= chatDisplay.scrollTop + 1; // Add a small buffer
                        if (isAtBottom) {
                            chatDisplay.scrollTop = chatDisplay.scrollHeight;
                        }
@@ -630,34 +564,26 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
                        aiMessageDiv.textContent = `错误：${json.details || json.error}`;
                        fullResponseContent = aiMessageDiv.textContent; // 将错误信息作为完整响应
                        done = true; // 遇到错误也停止
-                       break; // Exit inner loop
+                       break;
                   }
               } catch (e) {
                   console.error("解析数据块失败:", e, "数据:", data);
-                   // 如果解析数据块失败，可以在AI消息中显示一个提示
-                   if (!aiMessageDiv.textContent.includes("数据解析错误")) {
-                        aiMessageDiv.innerHTML += '<br> [接收数据解析错误，内容可能可能不完整]';
-                   }
+                  // 可以选择显示解析错误或忽略
               }
           }
           // Check abort signal after processing each line
            if (signal.aborted) {
               console.log("Processing lines aborted.");
               done = true; // Ensure loop terminates
-              break; // Exit inner loop
+              break;
           }
       }
-       // Check outer loop whether it was aborted
-       if (signal.aborted) {
-            console.log("Outer stream reading loop aborted.");
-            break;
-       }
     }
 
     // If the loop finished but not by [DONE], check if it was aborted
     if (!done && signal.aborted) {
         console.log("Stream reading finished due to abortion.");
-        return null; // Indicate that the response was aborted
+        return null; // Or return partial content if needed
     }
 
 
@@ -674,12 +600,9 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
     if (error.name === 'AbortError') {
         console.log('Fetch aborted by user action.');
         // Update AI message to indicate the conversation was stopped
-        // 检查消息容器是否有内容，避免在空消息框里添加“已停止”
-       if (aiMessageDiv && aiMessageDiv.innerHTML.trim() !== '' && aiMessageDiv.innerHTML.trim() !== '<span class="loading-indicator">思考中...</span>') {
-           aiMessageDiv.innerHTML += '<br>对话已停止。';
-       } else {
-           aiMessageDiv.textContent = '对话已停止。';
-       }
+        if (aiMessageDiv && !aiMessageDiv.textContent.includes("已停止")) {
+             aiMessageDiv.innerHTML += '<br>对话已停止。';
+        }
         return null; // Indicate that the response was aborted
 
     } else {
@@ -688,10 +611,10 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
         return aiMessageDiv.textContent; // Return error message as full response
     }
   } finally {
-      // Ensure buttons are reset even if there's an error or abort
+      // Ensure buttons are reset even if there's an error
       document.getElementById('stopButton').style.display = 'none';
       document.getElementById('submitButton').style.display = 'inline-block';
-      // Moved abortController = null; to handleSubmit
+      abortController = null; // Clear abortController
   }
 }
 
@@ -699,12 +622,6 @@ async function callModelAPI(prompt, aiMessageDiv, loadingIndicator, signal) { //
 // 将消息添加到历史记录
 // 注意：这里将原始Markdown文本存储在 historyItem 的 dataset 中
 function updateHistory(userPrompt, aiResponse) {
-   // 检查 aiResponse 是否是有效的字符串，如果为 null (如中止情况) 则不添加到历史
-  if (typeof aiResponse !== 'string' || aiResponse.trim() === '') {
-       console.log("AI Response is empty or invalid, skipping history update.");
-       return;
-  }
-
   const historyDisplay = document.getElementById('history-display');
   const historyItem = document.createElement('div');
   historyItem.classList.add('history-item');
@@ -735,7 +652,7 @@ function updateHistory(userPrompt, aiResponse) {
     document.getElementById('submitButton').style.display = 'inline-block';
      if (abortController) { // Abort any ongoing request if loading history
         abortController.abort();
-        abortController = null; // 清空 abortController
+        abortController = null;
      }
   });
 
@@ -811,7 +728,7 @@ function updateModelLabel() {
   existingLabel.textContent = `当前模型: ${modelLabel}`;
 }
 
-// 搜索历史记录 (此部分保留)
+// 搜索历史记录
 document.getElementById('searchInput').addEventListener('input', function () {
   const searchTerm = this.value.toLowerCase();
   const historyItems = document.querySelectorAll('#history-display .history-item');
@@ -830,14 +747,17 @@ document.getElementById('searchInput').addEventListener('input', function () {
 
 // 新建对话按钮功能已经移到initializeApp函数中
 
-// 保留这个输入框的 Enter 键监听器，并确保它只在没有进行中的请求时触发
-// 这个监听器已移到 initializeApp 函数的末尾，请确保只保留一个
-// document.getElementById('userInput').addEventListener('keydown', function(event) {
-//   if (event.key === 'Enter' && !event.shiftKey) {
-//     event.preventDefault();
-//      // Check if a request is already in progress before submitting
-//      if (!abortController) {
-//       document.getElementById('submitButton').click();
-//   }
-// }
-// });
+// 按下 Enter 键发送消息
+document.getElementById('userInput').addEventListener('keydown', function(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+     // Check if a request is already in progress before submitting
+     if (!abortController) {
+      document.getElementById('submitButton').click();
+  }
+}
+});
+
+// 监听模型选择器的变化 (确保在 initializeApp 后绑定)
+// 这里的监听器是多余的，因为已经在 initializeApp 中绑定了，可以删除这个重复的
+// document.getElementById('modelSelect').addEventListener('change', updateModelLabel);
