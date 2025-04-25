@@ -310,9 +310,10 @@ body {
 /* 聊天消息样式 */
 .user-message, .ai-message {
    padding: 16px;
-   margin-bottom: 20px;
+   /* Adjusted margin-bottom for reduced spacing */
+   margin-bottom: 10px; /* Reduced margin bottom */
    border-radius: 6px;
-   line-height: 1.5; /* 调整行高，可以根据需要微调 */
+   line-height: 1.6; /* Slightly reduced line height */
    word-wrap: break-word; /* 防止长单词或URL溢出 */
    white-space: pre-wrap; /* 保留空白符和换行符 */
    /* Ensure user and AI messages don't take up full width when chat-display is flex */
@@ -378,17 +379,18 @@ body {
 }
 
 
-/* Markdown 渲染元素的样式调整 - 修改了间距 */
+/* Markdown 渲染元素的样式调整 */
+/* Adjusted margins and padding for reduced spacing */
 .ai-message p {
-    margin-top: 0.088em; /* 减小段落上边距 */
-    margin-bottom: 0.088em; /* 减小段落下边距 */
+    margin-top: 0.3em; /* Reduced paragraph top margin */
+    margin-bottom: 0.3em; /* Reduced paragraph bottom margin */
 }
 
 .ai-message ul,
 .ai-message ol {
-    margin-top: 0.088em; /* 减小列表上边距 */
-    margin-bottom: 0.088em; /* 减小列表下边距 */
-    padding-left: 20px; /* 减小列表左边距 */
+    margin-top: 0.4em; /* Reduced list top margin */
+    margin-bottom: 0.4em; /* Reduced list bottom margin */
+    padding-left: 25px; /* Adjusted padding left for lists */
     list-style-type: disc; /* 或者 square; circle; for ul */
 }
 
@@ -397,17 +399,17 @@ body {
 }
 
 .ai-message li {
-    margin-bottom: 0.099em; /* 减小列表项下边距 */
+    margin-bottom: 0.2em; /* Reduced list item bottom margin */
 }
 
 .ai-message pre {
     background-color: #2d2d2d; /* 代码块背景色 */
     color: #cccccc; /* 代码颜色 */
-    padding: 12px; /* 代码块内边距 */
+    padding: 10px; /* Reduced code block padding */
     border-radius: 6px;
     overflow-x: auto;
-    margin-top: 0.058em; /* 减小代码块上边距 */
-    margin-bottom: 0.074em; /* 减小代码块下边距 */
+    margin-top: 0.6em; /* Reduced code block top margin */
+    margin-bottom: 0.6em; /* Reduced code block bottom margin */
     white-space: pre-wrap;
     word-wrap: break-word;
 }
@@ -426,8 +428,8 @@ body {
 }
 
 .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4, .ai-message h5, .ai-message h6 {
-    margin-top: 0.089em; /* 减小标题上边距 */
-    margin-bottom: 0.097em; /* 减小标题下边距 */
+    margin-top: 1em; /* Reduced heading top margin */
+    margin-bottom: 0.6em; /* Reduced heading bottom margin */
     color: #fff;
 }
 
@@ -444,14 +446,14 @@ body {
     margin-left: 0;
     font-style: italic;
     color: #8e8ea0;
-    margin-top: 0.088em; /* 增加引用块上边距 */
-    margin-bottom: 0.1em; /* 增加引用块下边距 */
+    margin-top: 0.6em; /* Reduced blockquote top margin */
+    margin-bottom: 0.6em; /* Reduced blockquote bottom margin */
 }
 
 .ai-message table {
     border-collapse: collapse;
-    margin-top: 0.088em; /* 增加表格上边距 */
-    margin-bottom: 0.088em; /* 增加表格下边距 */
+    margin-top: 0.6em; /* Reduced table top margin */
+    margin-bottom: 0.6em; /* Reduced table bottom margin */
     width: 100%;
 }
 
