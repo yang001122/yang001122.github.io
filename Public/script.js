@@ -734,3 +734,13 @@ document.getElementById('searchInput').addEventListener('input', function () {
 document.getElementById('userInput').addEventListener('keydown', function(event) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
+     // Check if a request is already in progress before submitting
+     if (!abortController) {
+      document.getElementById('submitButton').click();
+  }
+}
+});
+
+// 监听模型选择器的变化 (确保在 initializeApp 后绑定)
+// 这里的监听器是多余的，因为已经在 initializeApp 中绑定了，可以删除这个重复的
+// document.getElementById('modelSelect').addEventListener('change', updateModelLabel);
