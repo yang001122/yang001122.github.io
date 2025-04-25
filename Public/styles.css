@@ -312,7 +312,8 @@ body {
    padding: 16px;
    margin-bottom: 20px;
    border-radius: 6px;
-   line-height: 1.5; /* 调整行高，可以根据需要微调 */
+   /* line-height: 1.5; */ /* 调整行高，可以根据需要微调 */
+   line-height: 1.6; /* 稍微调整行高，让文本更紧凑 */
    word-wrap: break-word; /* 防止长单词或URL溢出 */
    white-space: pre-wrap; /* 保留空白符和换行符 */
    /* Ensure user and AI messages don't take up full width when chat-display is flex */
@@ -378,17 +379,18 @@ body {
 }
 
 
-/* Markdown 渲染元素的样式调整 - 修改了间距 */
+/* Markdown 渲染元素的样式调整 */
+/* 统一块级元素的底部外边距为大约 28px，并移除顶部的外边距 */
 .ai-message p {
-    margin-top: 0.2em; /* 减小段落上边距 */
-    margin-bottom: 0.2em; /* 减小段落下边距 */
+    margin-top: 0; /* 移除顶部外边距 */
+    margin-bottom: 28px; /* 统一底部外边距 */
 }
 
 .ai-message ul,
 .ai-message ol {
-    margin-top: 0.2em; /* 减小列表上边距 */
-    margin-bottom: 0.2em; /* 减小列表下边距 */
-    padding-left: 20px; /* 减小列表左边距 */
+    margin-top: 0; /* 移除顶部外边距 */
+    margin-bottom: 28px; /* 统一底部外边距 */
+    padding-left: 20px; /* 列表左边距 */
     list-style-type: disc; /* 或者 square; circle; for ul */
 }
 
@@ -397,17 +399,24 @@ body {
 }
 
 .ai-message li {
-    margin-bottom: 0.2em; /* 减小列表项下边距 */
+    /* 保留列表项之间的较小间距，或者设置为0并依赖 ul/ol 的 margin-bottom */
+     margin-bottom: 8px; /* 列表项之间的间距 */
+}
+
+/* 确保列表结束后的间距也是 28px */
+.ai-message ul li:last-child,
+.ai-message ol li:last-child {
+    margin-bottom: 28px;
 }
 
 .ai-message pre {
     background-color: #2d2d2d; /* 代码块背景色 */
     color: #cccccc; /* 代码颜色 */
-    padding: 12px; /* 代码块内边距 */
+    padding: 12px; /* 代码块内边距，减小 */
     border-radius: 6px;
+    margin-top: 0; /* 移除顶部外边距 */
+    margin-bottom: 28px; /* 统一底部外边距 */
     overflow-x: auto;
-    margin-top: 0.6em; /* 减小代码块上边距 */
-    margin-bottom: 0.6em; /* 减小代码块下边距 */
     white-space: pre-wrap;
     word-wrap: break-word;
 }
@@ -426,17 +435,19 @@ body {
 }
 
 .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4, .ai-message h5, .ai-message h6 {
-    margin-top: 0.4em; /* 减小标题上边距 */
-    margin-bottom: 0.2em; /* 减小标题下边距 */
+    margin-top: 0; /* 移除顶部外边距 */
+    margin-bottom: 28px; /* 统一底部外边距 */
     color: #fff;
 }
 
-.ai-message h1 { font-size: 1.7em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em;}
-.ai-message h2 { font-size: 1.4em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em;}
-.ai-message h3 { font-size: 1.2em; }
-.ai-message h4 { font-size: 1em; }
-.ai-message h5 { font-size: 0.9em; }
-.ai-message h6 { font-size: 0.8em; color: #8e8ea0;}
+/* 保留标题下方的边框和内边距，但移除其自身的 margin-bottom */
+.ai-message h1 { font-size: 1.7em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em; margin-bottom: 28px;}
+.ai-message h2 { font-size: 1.4em; border-bottom: 1px solid #4d4d4f; padding-bottom: 0.3em; margin-bottom: 28px;}
+.ai-message h3 { font-size: 1.2em; margin-bottom: 28px;}
+.ai-message h4 { font-size: 1em; margin-bottom: 28px;}
+.ai-message h5 { font-size: 0.9em; margin-bottom: 28px;}
+.ai-message h6 { font-size: 0.8em; color: #8e8ea0; margin-bottom: 28px;}
+
 
 .ai-message blockquote {
     border-left: 4px solid #565869;
@@ -444,14 +455,14 @@ body {
     margin-left: 0;
     font-style: italic;
     color: #8e8ea0;
-    margin-top: 0.6em; /* 增加引用块上边距 */
-    margin-bottom: 0.6em; /* 增加引用块下边距 */
+    margin-top: 0; /* 移除顶部外边距 */
+    margin-bottom: 28px; /* 统一底部外边距 */
 }
 
 .ai-message table {
     border-collapse: collapse;
-    margin-top: 0.6em; /* 增加表格上边距 */
-    margin-bottom: 0.6em; /* 增加表格下边距 */
+    margin-top: 0; /* 移除顶部外边距 */
+    margin-bottom: 28px; /* 统一底部外边距 */
     width: 100%;
 }
 
