@@ -1,4 +1,5 @@
 /* 代码内容：styles.css */
+
 /* 页面全局样式 */
 body {
    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -252,8 +253,9 @@ body {
    padding: 20px;
    display: flex; /* Added flex display */
    flex-direction: column; /* Stack children vertically */
-   justify-content: center; /* Center vertically when content is less than full height */
-   align-items: center; /* Center horizontally when content is less than full width */
+   /* Removed centering for default chat flow */
+   /* justify-content: center; */
+   /* align-items: center; */
 }
 
 /* 输入区域容器 - 修改为黑色 */
@@ -511,4 +513,40 @@ body {
        margin-bottom: 10px; /* 添加底部外边距 */
        text-align: center;
    }
+}
+
+/* === 新增或修改的初始状态样式 === */
+
+/* 聊天区域在初始状态下 */
+.chat-area.initial-state {
+    justify-content: center; /* 垂直居中其内容 (chat-display 和 input-area-container) */
+    align-items: center; /* 水平居中其内容 */
+}
+
+/* chat-display 在初始状态下 */
+.chat-area.initial-state .chat-display {
+    flex: none; /* 不再占据剩余空间，只包裹内容 */
+    justify-content: center; /* 重新垂直居中欢迎消息 */
+    align-items: center; /* 重新水平居中欢迎消息 */
+    padding-bottom: 0; /* 减小底部内边距，让输入框更靠近 */
+    margin-bottom: 20px; /* 在欢迎消息下方增加外边距 */
+}
+
+/* input-area-container 在初始状态下 */
+.chat-area.initial-state .input-area-container {
+    position: relative; /* 或者 static */
+    width: 80%; /* 设置宽度 */
+    max-width: 500px; /* 最大宽度与欢迎消息或登录框一致 */
+    margin: 0 auto; /* 水平居中，并移除顶部外边距（已在 chat-display 底部添加）*/
+    padding: 0 20px 12px; /* 调整内边距，保持左右和底部间距 */
+    background-color: transparent; /* 背景透明 */
+    border-top: none; /* 移除顶部边框 */
+}
+
+/* 确保 input-area 在初始状态的容器内正常显示 */
+.chat-area.initial-state .input-area {
+     width: 100%; /* 填满父容器 */
+     background-color: #1a1a1a; /* 保持背景色 */
+     border-radius: 6px;
+     padding: 8px 12px; /* 保持内边距 */
 }

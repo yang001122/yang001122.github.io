@@ -62,6 +62,9 @@ function initializeApp() {
 
   displayInitialWelcome();
 
+  // 在初始化时，将 chat-area 设置为初始状态
+  document.querySelector('.chat-area').classList.add('initial-state');
+
   // 绑定提交按钮事件
   document.getElementById('submitButton').addEventListener('click', handleSubmit);
 
@@ -92,6 +95,9 @@ function initializeApp() {
     uploadedFile = null;
     // 重置文件输入
     document.getElementById('fileInput').value = '';
+
+    // 新建对话时，将 chat-area 恢复到初始状态
+    document.querySelector('.chat-area').classList.add('initial-state');
   });
 
   // 绑定历史记录搜索
@@ -193,6 +199,10 @@ async function handleFileUpload(event) {
     chatDisplay.appendChild(fileNotification);
     chatDisplay.scrollTop = chatDisplay.scrollHeight;
 
+     // 当上传文件后，如果当前是初始状态，移除 initial-state 类以进入正常聊天布局
+     document.querySelector('.chat-area').classList.remove('initial-state');
+
+
   } catch (error) {
     console.error('文件上传错误:', error);
     alert(`文件上传失败: ${error.message}`);
@@ -216,6 +226,10 @@ async function handleSubmit() {
   if (initialWelcome) {
     chatDisplay.removeChild(initialWelcome);
   }
+
+  // 当用户发送第一条消息时，移除 initial-state 类
+  document.querySelector('.chat-area').classList.remove('initial-state');
+
 
   const userMessageDiv = document.createElement('div');
   userMessageDiv.classList.add('user-message');
@@ -654,6 +668,8 @@ function updateHistory(userPrompt, aiResponse) {
         abortController.abort();
         abortController = null;
      }
+     // 确保从历史记录加载时也移除了初始状态类
+     document.querySelector('.chat-area').classList.remove('initial-state');
   });
 
   // 创建删除图标容器
