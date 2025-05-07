@@ -681,6 +681,16 @@ function updateHistory(userPrompt, aiResponse) {
   deleteIconContainer.addEventListener('click', (event) => {
     event.stopPropagation(); // 防止点击冒泡到历史项
     historyItem.remove(); // 从DOM中移除历史项
+
+    // 检查当前是否已无历史项，如果是，则回到新建对话界面
+    const historyDisplay = document.getElementById('history-display');
+    if (historyDisplay.children.length === 0) {
+        // 清空聊天区并显示欢迎页
+        document.getElementById('chat-display').innerHTML = '';
+        displayInitialWelcome();
+        // 恢复初始状态样式
+        document.querySelector('.chat-area').classList.add('initial-state');
+    }
   });
 
   // 将文本和图标添加到历史项
