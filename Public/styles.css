@@ -424,8 +424,8 @@ body {
 }
 
 .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4, .ai-message h5, .ai-message h6 {
-    margin-top: 0.8em; /* 从1em减小到0.8em */
-    margin-bottom: 0.4em; /* 从0.6em减小到0.4em */
+    margin-top: 0.6em;   /* 可再减小 */
+    margin-bottom: 0.15em; /* 明显减小 */
     color: #fff;
 }
 
@@ -472,6 +472,27 @@ body {
     text-decoration: underline;
 }
 
+/* 去掉标题后紧跟段落、列表的上边距 */
+.ai-message h1 + p,
+.ai-message h2 + p,
+.ai-message h3 + p,
+.ai-message h4 + p,
+.ai-message h5 + p,
+.ai-message h6 + p,
+.ai-message h1 + ul,
+.ai-message h2 + ul,
+.ai-message h3 + ul,
+.ai-message h4 + ul,
+.ai-message h5 + ul,
+.ai-message h6 + ul,
+.ai-message h1 + ol,
+.ai-message h2 + ol,
+.ai-message h3 + ol,
+.ai-message h4 + ol,
+.ai-message h5 + ol,
+.ai-message h6 + ol {
+    margin-top: 0;
+}
 
 /* 响应式设计 */
 @media (max-width: 768px) {
