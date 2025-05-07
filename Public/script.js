@@ -188,9 +188,6 @@ async function handleFileUpload(event) {
     userInput.placeholder = `文件 "${file.name}" 已上传，请输入问题或直接发送以分析文件`;
     userInput.disabled = false;
 
-    // 可选：自动在输入框中添加关于文件的提示文本
-    userInput.value = `请分析我上传的文件: ${file.name}`;
-
     // 通知用户
     const chatDisplay = document.getElementById('chat-display');
     const fileNotification = document.createElement('div');
