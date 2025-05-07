@@ -623,7 +623,7 @@ body {
     padding-top: 0 !important;
 }
 
-/* 有序/无序列表本身的margin也去掉 */
+/* 有序/无序列表本身的margin-top也去掉 */
 .ai-message ul,
 .ai-message ol {
     margin-top: 0 !important;
@@ -699,4 +699,34 @@ body {
     margin-bottom: 0 !important;
     padding: 0 !important;
     line-height: 1.5 !important;
+}
+
+/* 标题与下方内容间距极限压缩 */
+.ai-message h1,
+.ai-message h2,
+.ai-message h3,
+.ai-message h4,
+.ai-message h5,
+.ai-message h6 {
+    margin-top: 0.1em !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* 标题后紧跟任何内容都无上边距 */
+.ai-message h1 + *,
+.ai-message h2 + *,
+.ai-message h3 + *,
+.ai-message h4 + *,
+.ai-message h5 + *,
+.ai-message h6 + * {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* 段落、ul、ol本身的margin-top也全部去掉 */
+.ai-message p,
+.ai-message ul,
+.ai-message ol {
+    margin-top: 0 !important;
 }
