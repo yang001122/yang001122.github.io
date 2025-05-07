@@ -387,18 +387,15 @@ body {
 
 .ai-message ul,
 .ai-message ol {
-    margin-top: 0.3em; /* 从0.4em减小到0.3em */
-    margin-bottom: 0.3em; /* 从0.4em减小到0.3em */
-    padding-left: 20px; /* 从25px减小到20px */
-    list-style-type: disc; /* 或者 square; circle; for ul */
-}
-
-.ai-message ol {
-     list-style-type: decimal; /* 有序列表使用数字 */
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 16px;
 }
 
 .ai-message li {
-    margin-bottom: 0.1em; /* 从0.2em减小到0.1em */
+    margin-bottom: 0;
+    line-height: 1.1;
+    padding: 0;
 }
 
 .ai-message pre {
