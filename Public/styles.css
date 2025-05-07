@@ -645,3 +645,58 @@ body {
     padding: 0 !important;
     line-height: 1.5 !important;
 }
+
+/* 压缩分割线和标题、内容的间距 */
+.ai-message hr {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+    border: none;
+    border-top: 1px solid #666;
+}
+
+/* 压缩标题与内容间距 */
+.ai-message h1,
+.ai-message h2,
+.ai-message h3,
+.ai-message h4,
+.ai-message h5,
+.ai-message h6 {
+    margin-top: 0.2em !important;
+    margin-bottom: 0.1em !important;
+    padding-bottom: 0 !important;
+}
+
+/* 标题后紧跟任何内容都无上边距 */
+.ai-message h1 + *,
+.ai-message h2 + *,
+.ai-message h3 + *,
+.ai-message h4 + *,
+.ai-message h5 + *,
+.ai-message h6 + * {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* 压缩ul/ol与上下内容的间距 */
+.ai-message ul,
+.ai-message ol {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-left: 18px !important;
+}
+
+/* 压缩li与内容的间距 */
+.ai-message li {
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+    line-height: 1.3 !important;
+    padding: 0 !important;
+}
+
+/* 压缩p与内容的间距 */
+.ai-message p {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    line-height: 1.5 !important;
+}
