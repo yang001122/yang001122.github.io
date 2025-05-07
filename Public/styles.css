@@ -569,3 +569,33 @@ body {
      border-radius: 6px;
      padding: 8px 12px; /* 保持内边距 */
 }
+
+/* 进一步压缩标题和内容之间的间距 */
+.ai-message h1,
+.ai-message h2,
+.ai-message h3,
+.ai-message h4,
+.ai-message h5,
+.ai-message h6 {
+    margin-top: 0.4em !important;
+    margin-bottom: 0.05em !important;
+    padding-bottom: 0 !important;
+}
+
+/* 标题后紧跟段落、列表、粗体等的上边距全部去掉 */
+.ai-message h1 + *,
+.ai-message h2 + *,
+.ai-message h3 + *,
+.ai-message h4 + *,
+.ai-message h5 + *,
+.ai-message h6 + * {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* 段落、ul、ol本身的margin-top也进一步压缩 */
+.ai-message p,
+.ai-message ul,
+.ai-message ol {
+    margin-top: 0 !important;
+}
