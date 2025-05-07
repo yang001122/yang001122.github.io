@@ -623,7 +623,7 @@ body {
     padding-top: 0 !important;
 }
 
-/* 有序/无序列表本身的margin-top也去掉 */
+/* 有序/无序列表本身的margin-top也进一步压缩 */
 .ai-message ul,
 .ai-message ol {
     margin-top: 0 !important;
