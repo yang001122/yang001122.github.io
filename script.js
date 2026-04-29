@@ -468,7 +468,7 @@ function displayInitialWelcome() {
   let greeting;
   if (hour >= 6 && hour < 12) {
     greeting = "Hi,上午好";
-  } else if (hour >= 12 && hour < 18) {
+  } else if (hour >= 12 && hour < 14) {
     greeting = "Hi,中午好";
   } else {
     greeting = "Hi,晚上好";
