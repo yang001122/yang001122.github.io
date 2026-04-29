@@ -468,11 +468,13 @@ function displayInitialWelcome() {
   let greeting;
   if (hour >= 6 && hour < 12) {
     greeting = "Hi,上午好";
-  } else if (hour >= 12 && hour < 14) {
+ } else if (hour >= 12 && hour < 14) {
     greeting = "Hi,中午好";
-  } else {
+} else if (hour >= 14 && hour < 18) {
+    greeting = "Hi,下午好";   // ← 加这个
+} else {
     greeting = "Hi,晚上好";
-  }
+}
 
   welcomeMessage.textContent = `${greeting}，有什么可以帮忙的？`; // Concatenate greeting with the rest of the message
   chatDisplay.appendChild(welcomeMessage);
