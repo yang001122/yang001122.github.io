@@ -1,6 +1,6 @@
 // 代码内容：script.js
 const BACKEND_URL = 'https://yang001122-github-io.onrender.com'; // 后端URL
-const CORRECT_PASSWORD = '20191130'; // 正确的密码
+const CORRECT_PASSWORD = 'y9899'; // 正确的密码
 
 let abortController = null; // Global variable to hold AbortController
 let uploadedFile = null; // 全局变量存储已上传的文件信息
