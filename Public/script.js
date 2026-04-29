@@ -1,5 +1,5 @@
 // 代码内容：script.js
-const BACKEND_URL = 'http://165.232.161.255:3000'; // 后端URL
+const BACKEND_URL = 'https://yang001122-github-io.onrender.com'; // 后端URL
 const CORRECT_PASSWORD = '20191130'; // 正确的密码
 
 let abortController = null; // Global variable to hold AbortController
